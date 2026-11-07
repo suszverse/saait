@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/*
+ * Saait design tokens. Names match the Figma variables' WEB code syntax
+ * (docs/design/figma.md): colours are --color-*, radii --radius-*, spacing
+ * --space-*. `@theme static` makes Tailwind emit every variable on :root, so the same names
+ * work in plain CSS and as utilities (bg-sindoor, rounded-button, p-space-20).
+ * The numeric utilities (gap-3, p-5) are the same 4 px grid via --spacing.
+ */
+@theme static {
+  --color-*: initial;
+  --color-ink: #1f1d2b;
+  --color-stone: #6a6775;
+  --color-line: #e4e0d8;
+  --color-sindoor: #b3121f;
+  --color-marigold: #e89b00;
+  --color-marigold-text: #7a4d00;
+  --color-teal: #0e6b63;
+  --color-white: #ffffff;
+  --color-tint: #f4f2ee;
+  --color-marigold-tint: #fff4dc;
+  --color-marigold-line: #f0d28a;
+  --color-teal-tint: #e6f2f0;
+  --color-sindoor-tint: #fbe4e6;
+  --color-disabled-text: #8a8794;
+  /* Not a Figma variable: the unchecked checkbox border used in two screens. */
+  --color-check-border: #a8a4b0;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --radius-control: 12px;
+  --radius-button: 14px;
+  --radius-card: 16px;
+  --radius-chip: 999px;
+
+  /* 4 px grid: gap-3 = 12px, p-5 = 20px. */
+  --spacing: 4px;
+  --spacing-space-4: var(--space-4);
+  --spacing-space-8: var(--space-8);
+  --spacing-space-12: var(--space-12);
+  --spacing-space-16: var(--space-16);
+  --spacing-space-20: var(--space-20);
+  --spacing-space-24: var(--space-24);
+  --spacing-space-32: var(--space-32);
+  --spacing-space-56: var(--space-56);
+  /* Screen gutters: 20 px on phone, 64 px on desktop. */
+  --spacing-gutter: var(--space-20);
+  --spacing-gutter-desktop: var(--gutter-desktop);
+
+  --font-sans: var(--font-mukta), system-ui, sans-serif;
+
+  /* Type ramp from the Figma text styles */
+  --text-display: 44px;
+  --text-display--line-height: 50px;
+  --text-display--letter-spacing: -0.015em;
+  --text-title: 28px;
+  --text-title--line-height: 34px;
+  --text-title--letter-spacing: -0.01em;
+  --text-heading: 18px;
+  --text-heading--line-height: 24px;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-small: 14px;
+  --text-small--line-height: 20px;
+  --text-meta: 13px;
+  --text-meta--line-height: 18px;
+  --text-micro: 12px;
+  --text-micro--line-height: 16px;
+}
+
+:root {
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-56: 56px;
+  --gutter-desktop: 64px;
+}
+
+html {
+  background: var(--color-white);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
