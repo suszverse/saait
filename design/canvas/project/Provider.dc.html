@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Provider and packages</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+a{color:#1F1D2B}a:hover{color:#B3121F}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FFFFFF; color: #1F1D2B; font-family: Mukta, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden; position: relative">
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; height: 236px; overflow: hidden">
+    <span aria-hidden="true" style="grid-row: span 2; background: #D9D4CB; display: block"></span>
+    <span aria-hidden="true" style="background: #C7C9CF; display: block"></span>
+    <span aria-hidden="true" style="background: #CFC9D6; display: block"></span>
+    <span aria-hidden="true" style="background: #E0DCD3; display: block"></span>
+    <span aria-hidden="true" style="background: #BFC3C9; display: block"></span>
+  </div>
+  <a href="Results.dc.html" aria-label="Back" style="position: absolute; left: 12px; top: 52px; width: 44px; height: 44px; border-radius: 999px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #1F1D2B">
+    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+  </a>
+  <button style="position: absolute; right: 12px; top: 52px; height: 36px; padding: 0 12px; border-radius: 999px; border: 0; background: #FFFFFF; color: #1F1D2B; font-family: inherit; font-size: 13px; font-weight: 600">48 photos</button>
+
+  <div style="padding: 16px 20px 0 20px; display: flex; flex-direction: column; gap: 14px; flex: 1 1 auto; overflow: hidden">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <h1 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 800">Shrestha Studio</h1>
+        <span style="height: 24px; padding: 0 9px; border-radius: 999px; background: #E6F2F0; color: #0E6B63; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px">
+          <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>Verified studio
+        </span>
+      </div>
+      <div style="font-size: 14px; line-height: 20px; color: #6A6775">Butwal · since 2009 · 4.9 from 61 reviews · 38 weddings on this app</div>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; color: #0E6B63; font-weight: 600">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>Free on Falgun 12 · 1 of 3 slots left
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 700">Wedding photo packages</h2>
+      <span style="font-size: 13px; line-height: 18px; color: #6A6775">Fixed prices</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{packages}}" as="k" hint-placeholder-count="3">
+        <button onClick="{{k.pick}}" style="text-align: left; border: 1px solid {{k.border}}; background: {{k.bg}}; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; font-family: inherit; color: #1F1D2B">
+          <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%">
+            <span style="font-size: 17px; line-height: 22px; font-weight: 700">{{k.name}}</span>
+            <span style="font-size: 17px; line-height: 22px; font-weight: 800">Rs {{k.price}}</span>
+          </span>
+          <span style="font-size: 14px; line-height: 20px; color: #6A6775">{{k.inc}}</span>
+          <span style="font-size: 13px; line-height: 18px; color: #7A4D00">{{k.peak}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="font-size: 14px; line-height: 20px; color: #6A6775">Want something different? Message the studio. They can send you a custom offer at any price you both agree on; the date still locks here.</div>
+  </div>
+
+  <div style="padding: 12px 20px 28px 20px; border-top: 1px solid #E4E0D8; display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: center; background: #FFFFFF">
+    <a href="Provider.dc.html" style="height: 52px; border-radius: 14px; border: 1px solid #1F1D2B; color: #1F1D2B; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700">Message</a>
+    <a href="Booking.dc.html" style="height: 52px; border-radius: 14px; background: #B3121F; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 700">
+      <span>Lock Falgun 12</span>
+      <span style="font-weight: 500; opacity: 0.85">{{pickedPrice}}</span>
+    </a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { pick: 'Standard' };
+  }
+  renderVals() {
+    const list = [
+      { name: 'Basic', price: '35,000', inc: '1 photographer · 8 hours · 300 edited photos · 21 days', peak: 'Plus Rs 5,000 on a wedding date' },
+      { name: 'Standard', price: '65,000', inc: '2 shooters · photo and highlight film · 500 photos · 30 days', peak: 'Plus Rs 8,000 on a wedding date' },
+      { name: 'Premium', price: '120,000', inc: '3 shooters · cinematic film · drone · album · 45 days', peak: 'No surcharge' }
+    ];
+    const packages = list.map((k) => {
+      const on = k.name === this.state.pick;
+      return { ...k, pick: () => this.setState({ pick: k.name }), border: on ? '#1F1D2B' : '#E4E0D8', bg: on ? '#F4F2EE' : '#FFFFFF' };
+    });
+    const chosen = list.find((k) => k.name === this.state.pick) || list[1];
+    return { packages, pickedPrice: 'Rs ' + chosen.price };
+  }
+}
+</script>
+</body>
+</html>

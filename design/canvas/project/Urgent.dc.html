@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Urgent request</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+a{color:#1F1D2B}a:hover{color:#B3121F}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FFFFFF; color: #1F1D2B; font-family: Mukta, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+  <div style="background: #FFF4DC; padding: 56px 20px 18px 20px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <a href="Main.dc.html" aria-label="Back" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; color: #1F1D2B; border-radius: 12px">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+      </a>
+      <h1 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 800">Urgent request</h1>
+    </div>
+    <sc-if value="{{posting}}" hint-placeholder-val="{{true}}">
+      <div style="font-size: 15px; line-height: 22px; color: #7A4D00">Tell us what you need. Verified providers who are free get an SMS right away. The first to accept is yours, once you confirm.</div>
+    </sc-if>
+    <sc-if value="{{posted}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; align-items: center; justify-content: space-between">
+        <div style="font-size: 15px; line-height: 22px; color: #7A4D00">Sent to 9 providers in Butwal. Expires in</div>
+        <div style="height: 32px; padding: 0 12px; border-radius: 999px; background: #E89B00; color: #1F1D2B; font-size: 15px; font-weight: 800; display: inline-flex; align-items: center">1h 52m</div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{posting}}" hint-placeholder-val="{{true}}">
+    <div style="padding: 18px 20px 0 20px; display: flex; flex-direction: column; gap: 16px; flex: 1 1 auto; overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14px; line-height: 20px; font-weight: 600">What do you need</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <span style="height: 40px; padding: 0 14px; border-radius: 999px; background: #1F1D2B; color: #FFFFFF; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center">Wedding photo</span>
+          <span style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #E4E0D8; color: #1F1D2B; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center">Wedding film</span>
+          <span style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #E4E0D8; color: #1F1D2B; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center">Event</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <label for="u-date" style="font-size: 14px; line-height: 20px; font-weight: 600">Date</label>
+          <input id="u-date" type="text" value="Tomorrow, Falgun 13" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 1px solid #E4E0D8; font-family: inherit; font-size: 16px; color: #1F1D2B; background: #FFFFFF; min-width: 0">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <label for="u-time" style="font-size: 14px; line-height: 20px; font-weight: 600">Time</label>
+          <input id="u-time" type="text" value="10 am to 4 pm" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 1px solid #E4E0D8; font-family: inherit; font-size: 16px; color: #1F1D2B; background: #FFFFFF; min-width: 0">
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="u-venue" style="font-size: 14px; line-height: 20px; font-weight: 600">Venue</label>
+        <input id="u-venue" type="text" value="Hotel Avenue, Traffic Chowk, Butwal" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 1px solid #E4E0D8; font-family: inherit; font-size: 16px; color: #1F1D2B; background: #FFFFFF">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 14px; line-height: 20px; font-weight: 600">Budget</div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+          <span style="height: 44px; border-radius: 12px; border: 1px solid #E4E0D8; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">Under 30k</span>
+          <span style="height: 44px; border-radius: 12px; border: 1px solid #1F1D2B; background: #F4F2EE; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">30k to 45k</span>
+          <span style="height: 44px; border-radius: 12px; border: 1px solid #E4E0D8; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">45k and up</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="u-note" style="font-size: 14px; line-height: 20px; font-weight: 600">Anything else</label>
+        <textarea id="u-note" rows="2" style="padding: 12px 14px; border-radius: 14px; border: 1px solid #E4E0D8; font-family: inherit; font-size: 16px; line-height: 22px; color: #1F1D2B; background: #FFFFFF; resize: none">Our photographer cancelled this morning. Reception only, about 150 guests.</textarea>
+      </div>
+      <div style="font-size: 13px; line-height: 18px; color: #6A6775">We hold a Rs 10,000 deposit on your eSewa now and charge it only when you confirm a provider. Urgent fee Rs 1,000; Rs 600 of it goes to the provider.</div>
+    </div>
+    <div style="padding: 12px 20px 28px 20px; border-top: 1px solid #E4E0D8">
+      <button onClick="{{send}}" style="width: 100%; height: 52px; border-radius: 14px; border: 0; background: #E89B00; color: #1F1D2B; font-family: inherit; font-size: 16px; font-weight: 700">Send to free providers now</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{posted}}" hint-placeholder-val="{{false}}">
+    <div style="padding: 18px 20px 0 20px; display: flex; flex-direction: column; gap: 12px; flex: 1 1 auto; overflow: hidden">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 700">2 have accepted</h2>
+        <span style="font-size: 13px; line-height: 18px; color: #6A6775">Pick one to confirm</span>
+      </div>
+      <sc-for list="{{accepts}}" as="p" hint-placeholder-count="2">
+        <div style="border: 1px solid #E4E0D8; border-radius: 16px; padding: 14px; display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px">
+          <span aria-hidden="true" style="display: block; width: 72px; height: 90px; border-radius: 12px; background: {{p.tone}}"></span>
+          <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-size: 16px; line-height: 22px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{p.name}}</span>
+              <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #E6F2F0; color: #0E6B63; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; flex: 0 0 auto">Verified</span>
+            </div>
+            <div style="font-size: 13px; line-height: 18px; color: #6A6775">{{p.meta}}</div>
+            <div style="font-size: 15px; line-height: 20px; font-weight: 700">{{p.offer}}</div>
+            <div style="font-size: 13px; line-height: 18px; color: #7A4D00">Accepted {{p.when}}</div>
+          </div>
+          <a href="Booking.dc.html" style="grid-column: 1 / -1; height: 48px; border-radius: 14px; background: #B3121F; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700">Confirm {{p.short}} and pay deposit</a>
+        </div>
+      </sc-for>
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; line-height: 18px; color: #6A6775">
+        <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 999px; background: #E89B00; display: inline-block"></span>7 more were notified. If nobody suits you by 4 pm, our team calls you.
+      </div>
+    </div>
+    <div style="padding: 12px 20px 28px 20px; border-top: 1px solid #E4E0D8">
+      <button onClick="{{reset}}" style="width: 100%; height: 48px; border-radius: 14px; border: 1px solid #1F1D2B; background: #FFFFFF; color: #1F1D2B; font-family: inherit; font-size: 15px; font-weight: 700">Cancel request</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { posted: false };
+  }
+  renderVals() {
+    return {
+      posting: !this.state.posted,
+      posted: this.state.posted,
+      send: () => this.setState({ posted: true }),
+      reset: () => this.setState({ posted: false }),
+      accepts: [
+        { name: 'Anita Gurung Photography', short: 'Anita', meta: 'Butwal · 4.7 (12) · 6 weddings here', offer: 'Basic, Rs 32,000 for 6 hours', when: '4 minutes ago', tone: '#CFC9D6' },
+        { name: 'Prakash Films', short: 'Prakash', meta: 'Bhairahawa · 4.8 (40) · 22 weddings here', offer: 'Custom, Rs 44,000 with a second shooter', when: '11 minutes ago', tone: '#C7C9CF' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

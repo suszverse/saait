@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home: pick a date</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+a{color:#1F1D2B}a:hover{color:#B3121F}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FFFFFF; color: #1F1D2B; font-family: Mukta, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden; border-radius: 0px">
+
+  <div style="padding: 56px 20px 0 20px; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <div style="font-size: 14px; line-height: 20px; color: #6A6775">Shooting in</div>
+      <button aria-label="Notifications" style="width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; color: #1F1D2B; border-radius: 12px">
+        <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+      </button>
+    </div>
+    <button style="display: flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 0; font-family: inherit; font-size: 28px; line-height: 34px; font-weight: 800; color: #1F1D2B; letter-spacing: -0.01em; min-height: 44px">
+      <span>Butwal</span>
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+  </div>
+
+  <div style="margin-top: 20px; padding: 0 20px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <h1 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 700">Falgun 2083</h1>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 18px; color: #7A4D00">
+        <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 999px; background: #E89B00; display: inline-block"></span>
+        <span>साइत · wedding date</span>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px">
+      <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+        <button onClick="{{d.pick}}" style="height: 60px; border-radius: 12px; border: 1px solid {{d.border}}; background: {{d.bg}}; color: {{d.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-family: inherit; padding: 0">
+          <span style="font-size: 11px; line-height: 14px; color: {{d.sub}}">{{d.dow}}</span>
+          <span style="font-size: 17px; line-height: 20px; font-weight: 700">{{d.num}}</span>
+          <span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 999px; background: {{d.dot}}; display: block"></span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="font-size: 14px; line-height: 20px; color: #6A6775">{{dateLine}}</div>
+  </div>
+
+  <div style="margin-top: 18px; padding: 0 20px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none">
+    <sc-for list="{{cats}}" as="c" hint-placeholder-count="5">
+      <button onClick="{{c.pick}}" style="flex: 0 0 auto; height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; font-family: inherit; font-size: 14px; font-weight: 600; white-space: nowrap">{{c.label}}</button>
+    </sc-for>
+  </div>
+
+  <a href="Urgent.dc.html" style="margin: 18px 20px 0 20px; text-decoration: none; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; background: #FFF4DC; border: 1px solid #F0D28A; color: #1F1D2B">
+    <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 12px; background: #E89B00; display: flex; align-items: center; justify-content: center; color: #1F1D2B; flex: 0 0 auto">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    </span>
+    <span style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto">
+      <span style="font-size: 16px; line-height: 22px; font-weight: 700">Need someone within 72 hours?</span>
+      <span style="font-size: 13px; line-height: 18px; color: #7A4D00">Verified providers get an SMS. First to accept is yours.</span>
+    </span>
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+  </a>
+
+  <div style="margin-top: 22px; padding: 0 20px; display: flex; align-items: baseline; justify-content: space-between">
+    <h2 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 700">Free on {{picked}}</h2>
+    <a href="Results.dc.html" style="font-size: 14px; line-height: 20px; font-weight: 600; color: #B3121F; text-decoration: none; min-height: 44px; display: flex; align-items: center">See all 14</a>
+  </div>
+
+  <div style="margin-top: 10px; padding: 0 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex: 1 1 auto; overflow: hidden">
+    <sc-for list="{{pros}}" as="p" hint-placeholder-count="2">
+      <a href="Provider.dc.html" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px">
+        <span aria-hidden="true" style="display: block; aspect-ratio: 4 / 5; border-radius: 16px; background: {{p.tone}}; position: relative; overflow: hidden">
+          <span style="position: absolute; left: 10px; top: 10px; height: 26px; padding: 0 10px; border-radius: 999px; background: #FFFFFF; color: #0E6B63; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>Verified
+          </span>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 1px">
+          <span style="font-size: 15px; line-height: 20px; font-weight: 700">{{p.name}}</span>
+          <span style="font-size: 13px; line-height: 18px; color: #6A6775">{{p.meta}}</span>
+          <span style="font-size: 14px; line-height: 20px; font-weight: 600; margin-top: 2px">From Rs {{p.from}}</span>
+        </span>
+      </a>
+    </sc-for>
+  </div>
+
+  <nav aria-label="Main" style="height: 84px; border-top: 1px solid #E4E0D8; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px 8px 20px 8px; box-sizing: border-box">
+    <a href="Main.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #B3121F; font-size: 12px; font-weight: 600">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Dates
+    </a>
+    <a href="Results.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #6A6775; font-size: 12px; font-weight: 600">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Browse
+    </a>
+    <a href="Booking.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #6A6775; font-size: 12px; font-weight: 600">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Bookings
+    </a>
+    <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-decoration: none; color: #6A6775; font-size: 12px; font-weight: 600">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { picked: 12, cat: 'Wedding photo' };
+  }
+  renderVals() {
+    const saait = [5, 7, 12, 14, 19, 21, 26];
+    const base = [
+      { num: 9, dow: 'Sun' }, { num: 10, dow: 'Mon' }, { num: 11, dow: 'Tue' }, { num: 12, dow: 'Wed' },
+      { num: 13, dow: 'Thu' }, { num: 14, dow: 'Fri' }, { num: 15, dow: 'Sat' }
+    ];
+    const days = base.map((d) => {
+      const on = d.num === this.state.picked;
+      const isSaait = saait.includes(d.num);
+      return {
+        ...d,
+        pick: () => this.setState({ picked: d.num }),
+        bg: on ? '#1F1D2B' : '#FFFFFF',
+        fg: on ? '#FFFFFF' : '#1F1D2B',
+        sub: on ? '#C9C6D4' : '#6A6775',
+        border: on ? '#1F1D2B' : '#E4E0D8',
+        dot: isSaait ? '#E89B00' : 'transparent'
+      };
+    });
+    const catNames = ['Wedding photo', 'Wedding film', 'Event', 'Product', 'Reels'];
+    const cats = catNames.map((label) => {
+      const on = label === this.state.cat;
+      return {
+        label,
+        pick: () => this.setState({ cat: label }),
+        bg: on ? '#1F1D2B' : '#FFFFFF',
+        fg: on ? '#FFFFFF' : '#1F1D2B',
+        border: on ? '#1F1D2B' : '#E4E0D8'
+      };
+    });
+    const isSaait = saait.includes(this.state.picked);
+    return {
+      days,
+      cats,
+      picked: 'Falgun ' + this.state.picked,
+      dateLine: isSaait ? 'Falgun ' + this.state.picked + ' is a wedding date. Book early, 14 providers still free.' : 'Falgun ' + this.state.picked + ' is open. Most providers are free.',
+      pros: [
+        { name: 'Shrestha Studio', meta: 'Butwal · 4.9 (61)', from: '35,000', tone: '#D9D4CB' },
+        { name: 'Prakash Films', meta: 'Bhairahawa · 4.8 (40)', from: '48,000', tone: '#C7C9CF' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

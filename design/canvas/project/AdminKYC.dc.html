@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin: KYC review</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+a{color:#1F1D2B}a:hover{color:#B3121F}
+</style>
+</helmet>
+<div style="box-sizing: border-box; min-height: 900px; background: #F4F2EE; color: #1F1D2B; font-family: Mukta, system-ui, sans-serif; display: flex; flex-wrap: wrap">
+
+  <nav aria-label="Admin" style="flex: 1 1 220px; max-width: 240px; background: #FFFFFF; border-right: 1px solid #E4E0D8; padding: 28px 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px">
+    <div style="padding: 0 12px 20px 12px; display: flex; flex-direction: column; gap: 2px">
+      <div style="font-size: 20px; line-height: 26px; font-weight: 800">Saait</div>
+      <div style="font-size: 13px; line-height: 18px; color: #6A6775">Operator · Shrestha Studio</div>
+    </div>
+    <a href="AdminKYC.dc.html" aria-current="page" style="height: 44px; padding: 0 12px; border-radius: 12px; background: #F4F2EE; color: #1F1D2B; text-decoration: none; display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 700">
+      <span>Verification</span><span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #1F1D2B; color: #FFFFFF; font-size: 12px; display: inline-flex; align-items: center">7</span>
+    </a>
+    <a href="AdminKYC.dc.html" style="height: 44px; padding: 0 12px; border-radius: 12px; color: #1F1D2B; text-decoration: none; display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 600">
+      <span>Urgent requests</span><span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #E89B00; color: #1F1D2B; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center">1</span>
+    </a>
+    <a href="AdminKYC.dc.html" style="height: 44px; padding: 0 12px; border-radius: 12px; color: #1F1D2B; text-decoration: none; display: flex; align-items: center; font-size: 15px; font-weight: 600">Bookings</a>
+    <a href="AdminKYC.dc.html" style="height: 44px; padding: 0 12px; border-radius: 12px; color: #1F1D2B; text-decoration: none; display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: 600"><span>Disputes</span><span style="font-size: 13px; color: #6A6775">2</span></a>
+    <a href="AdminKYC.dc.html" style="height: 44px; padding: 0 12px; border-radius: 12px; color: #1F1D2B; text-decoration: none; display: flex; align-items: center; font-size: 15px; font-weight: 600">Payouts and TDS</a>
+    <a href="AdminKYC.dc.html" style="height: 44px; padding: 0 12px; border-radius: 12px; color: #1F1D2B; text-decoration: none; display: flex; align-items: center; font-size: 15px; font-weight: 600">Providers</a>
+    <a href="AdminKYC.dc.html" style="height: 44px; padding: 0 12px; border-radius: 12px; color: #1F1D2B; text-decoration: none; display: flex; align-items: center; font-size: 15px; font-weight: 600">Wedding dates</a>
+    <a href="AdminKYC.dc.html" style="height: 44px; padding: 0 12px; border-radius: 12px; color: #1F1D2B; text-decoration: none; display: flex; align-items: center; font-size: 15px; font-weight: 600">Settings</a>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px 40px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 800">Verification queue</h1>
+        <div style="font-size: 14px; line-height: 20px; color: #6A6775">7 waiting · oldest 1 day 6 hours · target is 2 working days</div>
+      </div>
+      <div style="display: flex; gap: 8px">
+        <span style="height: 36px; padding: 0 12px; border-radius: 999px; background: #1F1D2B; color: #FFFFFF; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center">Submitted 7</span>
+        <span style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #E4E0D8; background: #FFFFFF; color: #1F1D2B; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center">Resubmitted 2</span>
+        <span style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #E4E0D8; background: #FFFFFF; color: #1F1D2B; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center">Re-verification due 4</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+      <div style="flex: 1 1 300px; max-width: 360px; background: #FFFFFF; border: 1px solid #E4E0D8; border-radius: 16px; overflow: hidden">
+        <sc-for list="{{queue}}" as="q" hint-placeholder-count="5">
+          <button onClick="{{q.pick}}" style="width: 100%; text-align: left; border: 0; border-bottom: 1px solid #E4E0D8; background: {{q.bg}}; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; font-family: inherit; color: #1F1D2B">
+            <span style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px">
+              <span style="font-size: 15px; line-height: 20px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{q.name}}</span>
+              <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: {{q.tagBg}}; color: {{q.tagFg}}; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; flex: 0 0 auto">{{q.tag}}</span>
+            </span>
+            <span style="font-size: 13px; line-height: 18px; color: #6A6775">{{q.meta}}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <section style="flex: 2 1 480px; min-width: 0; background: #FFFFFF; border: 1px solid #E4E0D8; border-radius: 16px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 800">Anita Gurung Photography</h2>
+            <div style="font-size: 14px; line-height: 20px; color: #6A6775">Freelancer · Butwal · wedding photo, event · submitted Falgun 10, 3:42 pm · phone 98••••4471</div>
+          </div>
+          <span style="height: 28px; padding: 0 10px; border-radius: 999px; background: #F4F2EE; color: #6A6775; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center">Under review · you</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="font-size: 13px; line-height: 18px; font-weight: 600">ID front</div>
+            <div style="aspect-ratio: 3 / 2; border-radius: 12px; background: #D9D4CB"></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="font-size: 13px; line-height: 18px; font-weight: 600">ID back</div>
+            <div style="aspect-ratio: 3 / 2; border-radius: 12px; background: #D9D4CB"></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="font-size: 13px; line-height: 18px; font-weight: 600">Selfie</div>
+            <div style="aspect-ratio: 3 / 2; border-radius: 12px; background: #CFC9D6"></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div style="font-size: 13px; line-height: 18px; font-weight: 600">PAN card</div>
+            <div style="aspect-ratio: 3 / 2; border-radius: 12px; background: #C7C9CF"></div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 20px; font-size: 14px; line-height: 20px">
+          <div style="display: flex; flex-direction: column"><span style="color: #6A6775">Name on ID</span><span style="font-weight: 600">Anita Gurung</span></div>
+          <div style="display: flex; flex-direction: column"><span style="color: #6A6775">Name on PAN</span><span style="font-weight: 600">Anita Gurung</span></div>
+          <div style="display: flex; flex-direction: column"><span style="color: #6A6775">Payout account</span><span style="font-weight: 600">Anita Gurung · Khalti 98••••4471</span></div>
+          <div style="display: flex; flex-direction: column"><span style="color: #6A6775">Citizenship no.</span><span style="font-weight: 600">27-01-71-00412</span></div>
+          <div style="display: flex; flex-direction: column"><span style="color: #6A6775">PAN</span><span style="font-weight: 600">301245678 · not VAT registered · 15% TDS</span></div>
+          <div style="display: flex; flex-direction: column"><span style="color: #6A6775">Duplicates</span><span style="font-weight: 600; color: #0E6B63">None on phone, ID or PAN</span></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 15px; line-height: 20px; font-weight: 700">Checklist</div>
+          <sc-for list="{{checks}}" as="c" hint-placeholder-count="6">
+            <button onClick="{{c.toggle}}" style="height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid #E4E0D8; background: #FFFFFF; color: #1F1D2B; font-family: inherit; font-size: 14px; display: flex; align-items: center; gap: 10px; text-align: left">
+              <span aria-hidden="true" style="width: 20px; height: 20px; border-radius: 6px; border: 2px solid {{c.boxBorder}}; background: {{c.boxBg}}; display: inline-flex; align-items: center; justify-content: center; color: #FFFFFF; flex: 0 0 auto">
+                <sc-if value="{{c.on}}" hint-placeholder-val="{{true}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></sc-if>
+              </span>
+              <span>{{c.label}}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <label for="a-note" style="font-size: 14px; line-height: 20px; font-weight: 600">Note to provider (sent on rejection)</label>
+          <textarea id="a-note" rows="2" style="padding: 12px 14px; border-radius: 14px; border: 1px solid #E4E0D8; font-family: inherit; font-size: 15px; line-height: 22px; color: #1F1D2B; background: #FFFFFF; resize: none"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 1px solid #E4E0D8; padding-top: 16px">
+          <button style="height: 48px; padding: 0 20px; border-radius: 14px; border: 0; background: {{approveBg}}; color: {{approveFg}}; font-family: inherit; font-size: 15px; font-weight: 700">Approve as Verified</button>
+          <button style="height: 48px; padding: 0 20px; border-radius: 14px; border: 1px solid #B3121F; background: #FFFFFF; color: #B3121F; font-family: inherit; font-size: 15px; font-weight: 700">Reject with note</button>
+          <button style="height: 48px; padding: 0 16px; border-radius: 14px; border: 1px solid #E4E0D8; background: #FFFFFF; color: #1F1D2B; font-family: inherit; font-size: 15px; font-weight: 600">Ask for a better photo</button>
+          <span style="margin-left: auto; font-size: 13px; line-height: 18px; color: #6A6775">{{status}}</span>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 1, checks: [true, true, true, false, false, false] };
+  }
+  renderVals() {
+    const items = [
+      { name: 'Ramesh Thapa Films', tag: 'Resubmitted', meta: 'Studio · Bhairahawa · 1 day 6 hours', kind: 're' },
+      { name: 'Anita Gurung Photography', tag: 'Submitted', meta: 'Freelancer · Butwal · 22 hours', kind: 'new' },
+      { name: 'Kiran Rai', tag: 'Submitted', meta: 'Freelancer · Butwal · 20 hours', kind: 'new' },
+      { name: 'Lumbini Wedding Co.', tag: 'Studio', meta: 'Studio · Lumbini · 9 hours', kind: 'studio' },
+      { name: 'Sabina Shrestha', tag: 'Re-verify', meta: 'Payout account changed · 3 hours', kind: 'rev' }
+    ];
+    const queue = items.map((q, i) => ({
+      ...q,
+      pick: () => this.setState({ sel: i }),
+      bg: i === this.state.sel ? '#F4F2EE' : '#FFFFFF',
+      tagBg: q.kind === 'rev' ? '#FFF4DC' : q.kind === 're' ? '#FBE4E6' : '#F4F2EE',
+      tagFg: q.kind === 'rev' ? '#7A4D00' : q.kind === 're' ? '#B3121F' : '#6A6775'
+    }));
+    const labels = [
+      'ID is legible and not expired',
+      'Selfie matches the ID photo',
+      'PAN name matches ID name',
+      'Payout account name matches',
+      'Portfolio is original (3 images spot checked)',
+      'No duplicate phone, ID or PAN'
+    ];
+    const checks = labels.map((label, i) => {
+      const on = this.state.checks[i];
+      return {
+        label, on,
+        toggle: () => { const c = this.state.checks.slice(); c[i] = !c[i]; this.setState({ checks: c }); },
+        boxBorder: on ? '#1F1D2B' : '#A8A4B0', boxBg: on ? '#1F1D2B' : '#FFFFFF'
+      };
+    });
+    const done = this.state.checks.filter(Boolean).length;
+    const all = done === labels.length;
+    return {
+      queue, checks,
+      approveBg: all ? '#0E6B63' : '#E4E0D8', approveFg: all ? '#FFFFFF' : '#8A8794',
+      status: all ? 'All 6 checks done. Approval is logged with your name.' : done + ' of 6 checks done. Approve needs all 6.'
+    };
+  }
+}
+</script>
+</body>
+</html>

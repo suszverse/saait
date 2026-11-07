@@ -1,0 +1,36 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-11-07T12:00:00Z"},
+  "title": "Photographer marketplace UI",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "DesignSystem.dc.html": {"x": 0, "y": 0, "w": 1280, "h": 1560, "title": "Design system", "expand": "fill"},
+    "Main.dc.html": {"x": 0, "y": 1900, "w": 390, "h": 844, "title": "1 Home: pick a date"},
+    "Results.dc.html": {"x": 470, "y": 1900, "w": 390, "h": 844, "title": "2 Free on this date"},
+    "Provider.dc.html": {"x": 940, "y": 1900, "w": 390, "h": 844, "title": "3 Provider and packages"},
+    "Booking.dc.html": {"x": 1410, "y": 1900, "w": 390, "h": 844, "title": "4 Lock the date"},
+    "Urgent.dc.html": {"x": 1880, "y": 1900, "w": 390, "h": 844, "title": "5 Urgent request"},
+    "ProviderHome.dc.html": {"x": 2350, "y": 1900, "w": 390, "h": 844, "title": "6 Provider: urgent alert"},
+    "KYC.dc.html": {"x": 2820, "y": 1900, "w": 390, "h": 844, "title": "7 Provider KYC"},
+    "AdminKYC.dc.html": {"x": 0, "y": 2960, "w": 1280, "h": 900, "title": "8 Admin: KYC review", "expand": "fill"}
+  },
+  "order": [
+    "DesignSystem.dc.html",
+    "Main.dc.html",
+    "Results.dc.html",
+    "Provider.dc.html",
+    "Booking.dc.html",
+    "Urgent.dc.html",
+    "ProviderHome.dc.html",
+    "KYC.dc.html",
+    "AdminKYC.dc.html"
+  ],
+  "notes": {
+    "n1": {"x": 0, "y": -300, "text": "Design system for approval", "kind": "title1", "maxW": 1280},
+    "n2": {"x": 0, "y": 1600, "text": "Client and provider flows, phone", "kind": "title1", "maxW": 3210},
+    "n3": {"x": 0, "y": 2660, "text": "Operator admin, desktop", "kind": "title1", "maxW": 1280},
+    "s1": {"x": 1360, "y": 0, "w": 320, "text": "Photos are grey placeholders in this round. Real portfolio images come from providers once KYC passes. Nepali copy is shown where it changes the layout (date ribbon, saait marker); full bilingual copy follows approval.", "fill": "orange"}
+  },
+  "designSystems": []
+}

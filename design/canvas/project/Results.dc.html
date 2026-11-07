@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Free on this date</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+a{color:#1F1D2B}a:hover{color:#B3121F}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FFFFFF; color: #1F1D2B; font-family: Mukta, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+  <div style="padding: 56px 20px 0 20px; display: flex; align-items: center; gap: 8px">
+    <a href="Main.dc.html" aria-label="Back" style="width: 44px; height: 44px; margin-left: -12px; display: flex; align-items: center; justify-content: center; color: #1F1D2B; border-radius: 12px">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+    </a>
+    <div style="display: flex; flex-direction: column; flex: 1 1 auto">
+      <h1 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 800">Wedding photo, Falgun 12</h1>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 18px; color: #7A4D00">
+        <span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 999px; background: #E89B00; display: inline-block"></span>
+        <span>Wedding date · Butwal and 25 km</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 16px; padding: 0 20px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none">
+    <sc-for list="{{bands}}" as="b" hint-placeholder-count="4">
+      <button onClick="{{b.pick}}" style="flex: 0 0 auto; height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid {{b.border}}; background: {{b.bg}}; color: {{b.fg}}; font-family: inherit; font-size: 14px; font-weight: 600; white-space: nowrap">{{b.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="margin-top: 14px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between">
+    <div style="font-size: 14px; line-height: 20px; color: #6A6775">{{count}} free · sorted by rating</div>
+    <button style="height: 36px; padding: 0 10px; border: 0; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: #1F1D2B; display: flex; align-items: center; gap: 6px">
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filters
+    </button>
+  </div>
+
+  <div style="margin-top: 8px; padding: 0 20px 20px 20px; display: flex; flex-direction: column; gap: 14px; flex: 1 1 auto; overflow: hidden">
+    <sc-for list="{{pros}}" as="p" hint-placeholder-count="3">
+      <a href="Provider.dc.html" style="text-decoration: none; color: inherit; display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 14px; padding-bottom: 14px; border-bottom: 1px solid #E4E0D8">
+        <span aria-hidden="true" style="display: block; aspect-ratio: 4 / 5; border-radius: 16px; background: {{p.tone}}"></span>
+        <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+          <span style="display: flex; align-items: center; gap: 8px">
+            <span style="font-size: 17px; line-height: 22px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{p.name}}</span>
+            <sc-if value="{{p.verified}}" hint-placeholder-val="{{true}}">
+              <span style="height: 22px; padding: 0 8px; border-radius: 999px; background: #E6F2F0; color: #0E6B63; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto">
+                <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>Verified
+              </span>
+            </sc-if>
+          </span>
+          <span style="font-size: 13px; line-height: 18px; color: #6A6775">{{p.meta}}</span>
+          <span style="font-size: 13px; line-height: 18px; color: #6A6775">{{p.done}}</span>
+          <span style="margin-top: auto; display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+            <span style="font-size: 16px; line-height: 22px; font-weight: 700">From Rs {{p.from}}</span>
+            <span style="font-size: 12px; line-height: 16px; color: #7A4D00">{{p.peak}}</span>
+          </span>
+        </span>
+      </a>
+    </sc-for>
+    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 16px; background: #F4F2EE">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0E6B63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: 0 0 auto; margin-top: 2px"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+      <div style="font-size: 13px; line-height: 18px; color: #1F1D2B">Every provider here has shown ID and a PAN to our team. If one cancels, we replace them from this list or refund your deposit.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { band: 'Any budget' };
+  }
+  renderVals() {
+    const names = ['Any budget', 'Under Rs 30k', 'Rs 30k to 60k', 'Rs 60k and up'];
+    const bands = names.map((label) => {
+      const on = label === this.state.band;
+      return {
+        label,
+        pick: () => this.setState({ band: label }),
+        bg: on ? '#1F1D2B' : '#FFFFFF',
+        fg: on ? '#FFFFFF' : '#1F1D2B',
+        border: on ? '#1F1D2B' : '#E4E0D8'
+      };
+    });
+    return {
+      bands,
+      count: 14,
+      pros: [
+        { name: 'Shrestha Studio', verified: true, meta: 'Butwal · 4.9 (61) · replies in 1 hour', done: '38 weddings on this app', from: '35,000', peak: '+Rs 5,000 on this date', tone: '#D9D4CB' },
+        { name: 'Prakash Films', verified: true, meta: 'Bhairahawa · 4.8 (40) · replies in 3 hours', done: '22 weddings on this app', from: '48,000', peak: 'No surcharge', tone: '#C7C9CF' },
+        { name: 'Anita Gurung Photography', verified: true, meta: 'Butwal · 4.7 (12) · replies in 2 hours', done: '6 weddings on this app', from: '22,000', peak: '+Rs 3,000 on this date', tone: '#CFC9D6' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

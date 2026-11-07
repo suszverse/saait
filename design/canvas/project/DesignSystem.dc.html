@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Design system</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+a{color:#1F1D2B}a:hover{color:#B3121F}
+</style>
+</helmet>
+<div style="box-sizing: border-box; background: #FFFFFF; color: #1F1D2B; font-family: Mukta, system-ui, sans-serif; padding: 56px 64px 72px 64px; display: flex; flex-direction: column; gap: 56px; max-width: 1280px; margin: 0 auto">
+
+  <header style="display: flex; flex-direction: column; gap: 12px; max-width: 760px">
+    <h1 style="margin: 0; font-size: 44px; line-height: 50px; font-weight: 800; letter-spacing: -0.015em">Saait: the design system</h1>
+    <p style="margin: 0; font-size: 18px; line-height: 28px; color: #6A6775">Saait is the Nepali word for an auspicious date. The whole product is organised around the date, so the system is too: a marigold dot marks a wedding date everywhere it appears, sindoor red is reserved for the one action that commits a date, and teal marks a provider the operator has verified. Everything else is quiet: white ground, ink text, one-pixel lines, no shadows.</p>
+  </header>
+
+  <section style="display: flex; flex-direction: column; gap: 20px">
+    <h2 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 700">Colour</h2>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px">
+      <sc-for list="{{colors}}" as="c" hint-placeholder-count="6">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="height: 96px; border-radius: 16px; background: {{c.hex}}; border: 1px solid #E4E0D8"></div>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 15px; line-height: 20px; font-weight: 700">{{c.name}}</div>
+            <div style="font-size: 13px; line-height: 18px; color: #6A6775">{{c.hex}}</div>
+            <div style="font-size: 13px; line-height: 18px; color: #6A6775">{{c.use}}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <p style="margin: 0; font-size: 14px; line-height: 20px; color: #6A6775; max-width: 760px">Text on white uses Ink (15.6:1) or Stone (5.3:1). White on Sindoor is 7.3:1. Dark text on Marigold is 8.1:1. Red and marigold are never used to mean opposite things, and verified is never shown by colour alone.</p>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 20px">
+    <h2 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 700">Type: Mukta, one family</h2>
+    <p style="margin: 0; font-size: 16px; line-height: 24px; color: #6A6775; max-width: 760px">Mukta was designed Devanagari-first, so Nepali and English sit on one baseline with one personality. Weight does the hierarchy work; no second typeface.</p>
+    <div style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px 32px; align-items: baseline; border-top: 1px solid #E4E0D8; padding-top: 20px">
+      <div style="font-size: 13px; line-height: 18px; color: #6A6775">Display 44/50 800</div>
+      <div style="font-size: 44px; line-height: 50px; font-weight: 800; letter-spacing: -0.015em">Falgun 12 · फागुन १२</div>
+      <div style="font-size: 13px; line-height: 18px; color: #6A6775">Title 28/34 800</div>
+      <div style="font-size: 28px; line-height: 34px; font-weight: 800; letter-spacing: -0.01em">Lock this date</div>
+      <div style="font-size: 13px; line-height: 18px; color: #6A6775">Heading 18/24 700</div>
+      <div style="font-size: 18px; line-height: 24px; font-weight: 700">Free on Falgun 12 · फागुन १२ मा खाली</div>
+      <div style="font-size: 13px; line-height: 18px; color: #6A6775">Body 16/24 400</div>
+      <div style="font-size: 16px; line-height: 24px">Pay a 25% deposit now. The rest goes straight to Shrestha Studio after the event. बाँकी रकम सिधै स्टुडियोलाई।</div>
+      <div style="font-size: 13px; line-height: 18px; color: #6A6775">Small 14/20 400 and 600</div>
+      <div style="font-size: 14px; line-height: 20px">Delivery in 21 days · <span style="font-weight: 600">From Rs 35,000</span></div>
+      <div style="font-size: 13px; line-height: 18px; color: #6A6775">Micro 12/16 600</div>
+      <div style="font-size: 12px; line-height: 16px; font-weight: 600">Verified · Butwal · 4.9 (61)</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 20px">
+    <h2 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 700">Buttons and chips</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+      <button style="height: 52px; padding: 0 22px; border-radius: 14px; border: 0; background: #B3121F; color: #FFFFFF; font-family: inherit; font-size: 16px; font-weight: 700">Lock this date</button>
+      <button style="height: 52px; padding: 0 22px; border-radius: 14px; border: 1px solid #1F1D2B; background: #FFFFFF; color: #1F1D2B; font-family: inherit; font-size: 16px; font-weight: 700">Message</button>
+      <button style="height: 52px; padding: 0 22px; border-radius: 14px; border: 0; background: #E89B00; color: #1F1D2B; font-family: inherit; font-size: 16px; font-weight: 700">Accept urgent job</button>
+      <button style="height: 44px; padding: 0 16px; border-radius: 12px; border: 0; background: #F4F2EE; color: #1F1D2B; font-family: inherit; font-size: 15px; font-weight: 600">Add second shooter</button>
+      <button disabled style="height: 52px; padding: 0 22px; border-radius: 14px; border: 0; background: #E4E0D8; color: #8A8794; font-family: inherit; font-size: 16px; font-weight: 700">Lock this date</button>
+    </div>
+    <p style="margin: 0; font-size: 14px; line-height: 20px; color: #6A6775; max-width: 760px">Sindoor appears once per screen at most. Marigold buttons belong to the urgent flow only. Every control is at least 44 px tall; primary actions are 52 px.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+      <span style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #1F1D2B; background: #1F1D2B; color: #FFFFFF; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center">Wedding photo</span>
+      <span style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #E4E0D8; background: #FFFFFF; color: #1F1D2B; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center">Wedding film</span>
+      <span style="height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid #E4E0D8; background: #FFFFFF; color: #1F1D2B; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center">Event</span>
+      <span style="height: 26px; padding: 0 10px; border-radius: 999px; background: #E6F2F0; color: #0E6B63; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px">
+        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>Verified
+      </span>
+      <span style="height: 26px; padding: 0 10px; border-radius: 999px; background: #FFF4DC; color: #7A4D00; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px">
+        <span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 999px; background: #E89B00; display: inline-block"></span>Saait
+      </span>
+      <span style="height: 26px; padding: 0 10px; border-radius: 999px; background: #FFF4DC; color: #7A4D00; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center">Urgent · 2h left</span>
+      <span style="height: 26px; padding: 0 10px; border-radius: 999px; background: #F4F2EE; color: #6A6775; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center">Under review</span>
+      <span style="height: 26px; padding: 0 10px; border-radius: 999px; background: #FBE4E6; color: #B3121F; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center">Rejected</span>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 20px">
+    <h2 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 700">Dates</h2>
+    <div style="display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start">
+      <div style="display: grid; grid-template-columns: repeat(7, 48px); gap: 6px">
+        <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+          <div style="height: 60px; border-radius: 12px; border: 1px solid {{d.border}}; background: {{d.bg}}; color: {{d.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px">
+            <span style="font-size: 11px; line-height: 14px; color: {{d.sub}}">{{d.dow}}</span>
+            <span style="font-size: 17px; line-height: 20px; font-weight: 700">{{d.num}}</span>
+            <span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 999px; background: {{d.dot}}; display: block"></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; max-width: 480px; font-size: 14px; line-height: 20px; color: #6A6775">
+        <div>Day cells are 60 px tall with a 12 px radius. The selected day inverts to Ink. A marigold dot under the number means a wedding date; it is also written out beside the calendar so the meaning never rests on the dot alone.</div>
+        <div>Dates are shown in the Nepali calendar first, with the Gregorian date in Small type where it matters (confirmations, SMS).</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 20px">
+    <h2 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 700">Inputs</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; max-width: 980px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="ds-venue" style="font-size: 14px; line-height: 20px; font-weight: 600">Venue</label>
+        <input id="ds-venue" type="text" value="Siddhartha Party Palace, Butwal" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 1px solid #E4E0D8; font-family: inherit; font-size: 16px; color: #1F1D2B; background: #FFFFFF">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="ds-phone" style="font-size: 14px; line-height: 20px; font-weight: 600">Phone</label>
+        <input id="ds-phone" type="tel" value="98" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 2px solid #1F1D2B; font-family: inherit; font-size: 16px; color: #1F1D2B; background: #FFFFFF">
+        <div style="font-size: 13px; line-height: 18px; color: #6A6775">We send the booking code here by SMS.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="ds-pan" style="font-size: 14px; line-height: 20px; font-weight: 600">PAN number</label>
+        <input id="ds-pan" type="text" value="30124" style="height: 52px; padding: 0 14px; border-radius: 14px; border: 2px solid #B3121F; font-family: inherit; font-size: 16px; color: #1F1D2B; background: #FFFFFF">
+        <div style="font-size: 13px; line-height: 18px; color: #B3121F">A PAN has 9 digits. Check your PAN card.</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 20px">
+    <h2 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 700">Package card</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; max-width: 980px">
+      <sc-for list="{{packages}}" as="k" hint-placeholder-count="3">
+        <div style="border: 1px solid {{k.border}}; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+            <div style="font-size: 18px; line-height: 24px; font-weight: 700">{{k.name}}</div>
+            <div style="font-size: 18px; line-height: 24px; font-weight: 800">Rs {{k.price}}</div>
+          </div>
+          <div style="font-size: 14px; line-height: 20px; color: #6A6775">{{k.desc}}</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; line-height: 20px">
+            <span>{{k.hours}} hours</span><span>{{k.shooters}}</span><span>{{k.photos}} edited photos</span><span>{{k.delivery}} days</span>
+          </div>
+          <div style="font-size: 13px; line-height: 18px; color: #7A4D00">{{k.peak}}</div>
+        </div>
+      </sc-for>
+    </div>
+    <p style="margin: 0; font-size: 14px; line-height: 20px; color: #6A6775; max-width: 760px">Prices are fixed by the provider and always visible before contact. Peak-date surcharges are written on the card, never revealed at checkout. Packages are never sorted cheapest-first by default.</p>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 20px">
+    <h2 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 700">Messages the system sends</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; max-width: 980px">
+      <div style="border: 1px solid #E4E0D8; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 13px; line-height: 18px; color: #6A6775">SMS to provider, urgent wave 1</div>
+        <div style="font-size: 15px; line-height: 22px; font-family: inherit">Saait: Urgent job. Wedding photo, Falgun 13 (Feb 25), 10am to 4pm, Butwal. Budget Rs 30k to 45k. First to accept wins. Accept: saait.np/u/8K2P</div>
+      </div>
+      <div style="border: 1px solid #E4E0D8; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 13px; line-height: 18px; color: #6A6775">SMS to client, booking confirmed</div>
+        <div style="font-size: 15px; line-height: 22px">Saait: Falgun 12 is locked with Shrestha Studio. Deposit Rs 8,750 received. Balance Rs 26,250 is paid to the studio after the event. Code SA-4471.</div>
+      </div>
+    </div>
+    <p style="margin: 0; font-size: 14px; line-height: 20px; color: #6A6775; max-width: 760px">Copy rules: sentence case, plain verbs, the same word for the same action everywhere (lock, deposit, balance, accept). Errors say what happened and what to do. No exclamation marks.</p>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #E4E0D8; padding-top: 24px; max-width: 760px">
+    <h2 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 700">Spacing, radius, lines</h2>
+    <div style="font-size: 16px; line-height: 24px; color: #6A6775">Spacing on a 4 px grid: 4, 8, 12, 16, 20, 24, 32, 56. Screen gutter 20 px on phone, 64 px on desktop. Radius 12 px for controls and day cells, 14 px for buttons and inputs, 16 px for tiles and cards, 999 for chips. Lines are 1 px in Line colour; there are no drop shadows. Portfolio tiles are 4:5.</div>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const saait = [5, 7, 12, 14, 19, 21, 26];
+    const base = [
+      { num: 9, dow: 'Sun' }, { num: 10, dow: 'Mon' }, { num: 11, dow: 'Tue' }, { num: 12, dow: 'Wed' },
+      { num: 13, dow: 'Thu' }, { num: 14, dow: 'Fri' }, { num: 15, dow: 'Sat' }
+    ];
+    return {
+      colors: [
+        { name: 'Ink', hex: '#1F1D2B', use: 'Text, selected states' },
+        { name: 'Stone', hex: '#6A6775', use: 'Secondary text' },
+        { name: 'Line', hex: '#E4E0D8', use: 'Borders, disabled' },
+        { name: 'Sindoor', hex: '#B3121F', use: 'The commit action, errors' },
+        { name: 'Marigold', hex: '#E89B00', use: 'Wedding dates, urgent' },
+        { name: 'Teal', hex: '#0E6B63', use: 'Verified, success' }
+      ],
+      days: base.map((d) => {
+        const on = d.num === 12;
+        return {
+          ...d,
+          bg: on ? '#1F1D2B' : '#FFFFFF',
+          fg: on ? '#FFFFFF' : '#1F1D2B',
+          sub: on ? '#C9C6D4' : '#6A6775',
+          border: on ? '#1F1D2B' : '#E4E0D8',
+          dot: saait.includes(d.num) ? '#E89B00' : 'transparent'
+        };
+      }),
+      packages: [
+        { name: 'Basic', price: '35,000', desc: 'One photographer for the main ceremony.', hours: 8, shooters: '1 photographer', photos: 300, delivery: 21, peak: 'Plus Rs 5,000 on a wedding date', border: '#E4E0D8' },
+        { name: 'Standard', price: '65,000', desc: 'Photo and highlight film, two shooters.', hours: 10, shooters: '2 shooters', photos: 500, delivery: 30, peak: 'Plus Rs 8,000 on a wedding date', border: '#1F1D2B' },
+        { name: 'Premium', price: '120,000', desc: 'Cinematic film, drone, album included.', hours: 12, shooters: '3 shooters', photos: 800, delivery: 45, peak: 'No surcharge', border: '#E4E0D8' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
