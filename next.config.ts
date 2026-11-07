@@ -10,7 +10,8 @@ const nextConfig: NextConfig = {
     },
   },
   experimental: {
-    serverActions: { bodySizeLimit: "8mb" },
+    // 8 MB documents plus multipart overhead; the app enforces 8 MB itself.
+    serverActions: { bodySizeLimit: "10mb" },
   },
 };
 

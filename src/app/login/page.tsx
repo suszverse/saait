@@ -18,6 +18,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <p className="text-small text-stone">Clients, providers and the Saait team all sign in with a mobile number.</p>
       </div>
       <LoginForm next={next} />
+      <p className="text-small text-stone">
+        Photographer, videographer or creator?{" "}
+        <Link href="/login?next=/provider" className="font-semibold text-ink">
+          List your work on Saait
+        </Link>
+      </p>
     </main>
   );
 }
