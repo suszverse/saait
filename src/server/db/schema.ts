@@ -567,6 +567,34 @@ export const backupPoolMembers = pgTable(
 );
 
 // ---------- operations ----------
+export const outboxStatusEnum = pgEnum("outbox_status", ["pending", "sending", "sent"]);
+
+/**
+ * Outbound SMS outbox. Rows are written in the same transaction as the state
+ * change they announce, then claimed one at a time before sending, so a text
+ * is never lost to a crash and never sent twice by concurrent workers.
+ */
+export const smsOutbox = pgTable(
+  "sms_outbox",
+  {
+    id: id(),
+    bookingId: uuid("booking_id").references(() => bookings.id),
+    purpose: text("purpose").notNull(),
+    to: text("to").notNull(),
+    body: text("body").notNull(),
+    status: outboxStatusEnum("status").notNull().default("pending"),
+    attempts: smallint("attempts").notNull().default(0),
+    claimedAt: timestamp("claimed_at", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("sms_outbox_once_uq").on(t.bookingId, t.purpose, t.to),
+    index("sms_outbox_pending_idx").on(t.status, t.createdAt),
+  ],
+);
+
 export const smsLog = pgTable("sms_log", {
   id: id(),
   to: text("to").notNull(),

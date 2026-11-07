@@ -15,7 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/server/db/migrate.ts",
     "db:seed": "tsx src/server/db/seed.ts",
-    "db:reset:test": "tsx src/server/db/reset-test.ts"
+    "db:reset:test": "tsx src/server/db/reset-test.ts",
+    "jobs:tick": "tsx src/server/jobs/tick.ts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",
