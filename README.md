@@ -19,7 +19,30 @@ The live, interactive design canvas is at https://claude.ai/artifact/CVem25VV81k
 
 ## Status
 
-Design round 1 is awaiting approval. No application code yet. Phase 1 (schema, client booking flow, provider onboarding with KYC, admin desk) starts after the design system is approved.
+Phase 1 is in progress as a website (phone and desktop); a native app comes later. Progress is tracked in `docs/plans/saait-phase-1.md`. The Figma file and its known gaps are described in `docs/design/figma.md`.
+
+## Running it locally
+
+You need Node 22+, pnpm 10 and Postgres 16.
+
+```bash
+pnpm install
+cp .env.example .env.local        # then fill in the secrets it describes
+createdb saait && createdb saait_test
+pnpm db:migrate && pnpm db:seed   # Butwal cluster, providers, Falgun 2083 wedding dates
+pnpm dev
+```
+
+Sign in with any Nepali mobile number. In development the SMS adapter prints the code to the server log and stores it in `sms_log`. The seed includes a demo client (9812345678) and an operator (9857099001) for the verification desk at `/admin/kyc`.
+
+| Command | What it does |
+| --- | --- |
+| `pnpm test` | Unit and database tests against `DATABASE_URL_TEST` (`.env.test.local`) |
+| `pnpm e2e` | Playwright journeys on phone and desktop against a throwaway `saait_e2e` database |
+| `pnpm jobs:tick` | Expires 24-hour holds and retries unsent SMS. Run it every few minutes in production |
+| `pnpm db:generate` | Creates a new forward-only migration after a schema change |
+
+Payments run through a manual adapter in Phase 1: clients send the deposit to the company wallet with their booking code, and the desk confirms it through the signed webhook. `PAYMENT_SIMULATOR=on` adds a "simulate payment" button, and it is refused unless `DEPLOY_ENV` is `local` or `staging`.
 
 ## Planned stack
 
