@@ -102,20 +102,23 @@
   --gutter-desktop: 64px;
 }
 
-html {
-  background: var(--color-white);
-  color: var(--color-ink);
-}
+/* Base styles live in the base layer so utilities always win over them. */
+@layer base {
+  html {
+    background: var(--color-white);
+    color: var(--color-ink);
+  }
 
-body {
-  font-family: var(--font-sans);
-}
+  body {
+    font-family: var(--font-sans);
+  }
 
-a {
-  color: inherit;
-}
+  a {
+    color: inherit;
+  }
 
-:focus-visible {
-  outline: 2px solid var(--color-ink);
-  outline-offset: 2px;
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
 }
