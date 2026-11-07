@@ -25,6 +25,9 @@
   --color-disabled-text: #8a8794;
   /* Not a Figma variable: the unchecked checkbox border used in two screens. */
   --color-check-border: #a8a4b0;
+  /* Pressed/hover shades of the two action colours, 10% darker. */
+  --color-sindoor-hover: #9c0f1b;
+  --color-marigold-hover: #d48d00;
   --color-transparent: transparent;
   --color-current: currentColor;
 
@@ -66,6 +69,25 @@
   --text-meta--line-height: 18px;
   --text-micro: 12px;
   --text-micro--line-height: 16px;
+  /* Sizes the screens use between the named styles */
+  --text-nano: 11px;
+  --text-nano--line-height: 14px;
+  --text-label: 15px;
+  --text-label--line-height: 20px;
+  --text-lead: 17px;
+  --text-lead--line-height: 22px;
+  --text-brand: 20px;
+  --text-brand--line-height: 26px;
+  --text-screen: 22px;
+  --text-screen--line-height: 28px;
+  --text-profile: 24px;
+  --text-profile--line-height: 30px;
+
+  /* Multiline fields: 16 px text on a 22 px line (Urgent, Admin notes). */
+  --leading-field: 22px;
+
+  --container-page: 1280px;
+  --container-form: 440px;
 }
 
 :root {
