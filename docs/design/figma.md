@@ -29,6 +29,25 @@ The nine artboards are built from component instances and keep the canvas.json o
 
 Photos are grey rectangles in the source tones.
 
+## Page "Web screens"
+
+Desktop layouts of the website at 1440 wide. They were captured from the running site on localhost with the seeded data, so they show what is built, not a mockup. Each capture is raw frames with no component instances; use them as the reference when redesigning the desktop layout.
+
+| Frame | Route | Node |
+|---|---|---|
+| W1 Home: pick a date | `/` | 19:17 |
+| W2 Free on this date | `/results` | 20:17 |
+| W3 Provider and packages | `/p/[slug]` | 21:17 |
+| W4 Lock the date | `/book/[slug]` | 24:17 |
+| W5 Urgent request | `/urgent` | 22:17 |
+| W6 Sign in | `/login` | 23:17 |
+| W7 Provider: today | `/provider` | 25:17 |
+| W8 Provider: get verified | `/provider/kyc` | 26:17 |
+| W9 Admin: verification queue | `/admin/kyc` | 27:17 |
+| W10 Admin: review provider | `/admin/kyc/[id]` | 28:17 |
+
+The source mockups were phone-only apart from the admin screen, so the first Figma pass had no desktop client screens. This page was added on 2026-11-08 to close that gap.
+
 ## Not reproduced faithfully
 
 - **Interactive state.** The .dc.html screens toggle state; Figma shows one static state per screen. Urgent shows the posting form, not the "2 have accepted" view. Provider home shows the open alert, not the accepted or dismissed states. Admin shows 3 of 6 checks done, so Approve is disabled.
