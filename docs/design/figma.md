@@ -47,6 +47,7 @@ Choices made while designing, to confirm in review:
 - Sindoor stays at one use per screen. On chat screens the "Not sent" label is the one use, so send and lock buttons there are Ink or outlined. On the operator review screen the confirm button is the one use, so "Not sent" is Ink there.
 - Rewards and credit use Teal, not Marigold, because Marigold belongs to the urgent flow.
 - Crew are paid by the business directly, to the payout account Saait verified. This is the assumption in the proposal's open decision 2.
+- Location is a point, not a city (proposal section 9). C1 shows "Shooting near Traffic Chowk, Butwal" with a Pin icon, nearby-place chips with distances and a one-line note that the position is not stored. C2's reach chip reads "Near Traffic Chowk · within 30 km" and every card shows its distance. New icon: Icon/Pin.
 
 ## Page "Web screens"
 

@@ -87,7 +87,8 @@ Hard bans for leaking are hard to prove and push people away. Use quiet conseque
 | "Find crew" flow for businesses, with hire, rate and backup | New | Next |
 | Plans: Free freelancer, paid Business, with per-hire fee removed | `subscriptions`, fees | Next |
 | Points ledger, earn and spend rules, monthly cap | New `reward_ledger` table, `src/server/rewards.ts` | After chat |
-| Contact masking in chat | Chat (already Phase 2) | With chat |
+| Contact masking in chat, seven-layer checker (section 6) | Chat (already Phase 2) | With chat |
+| Venue as a point: geolocation, `places` search, nearby chips, distance on results (section 9) | `src/server/search.ts`, home and results pages | Next |
 | Leakage signals on the operator desk | Admin | After chat |
 | Repeat-client and family fee discount | `src/lib/fees.ts` | Next |
 
@@ -115,6 +116,26 @@ Chat exists so clients can ask questions and businesses can brief crew without l
 | Payment details | Any image containing a QR code or barcode, eSewa or Khalti IDs (they are phone numbers), bank account numbers, "send to my esewa" |
 | Other channels | Email addresses, links, @handles, and the words WhatsApp, Viber, IMO, Telegram, Signal, Instagram, Facebook, TikTok, "wa.me", "DM me" |
 | Images before a booking | No image uploads in chat until a deposit is paid. Portfolio images live on the profile. After the booking, images are allowed but scanned for QR codes and for numbers in the picture |
+
+### The checker's stack
+
+"Monitored" has to mean more than a regular expression. The check runs in layers, cheapest first, and every message goes through all of them before delivery.
+
+| Layer | What it does | Catches |
+|---|---|---|
+| 1. Normalise | Unicode NFKC, Devanagari and other digit scripts to ASCII, homoglyphs (o for 0, l for 1), zero-width characters and separators stripped, number words in English, Nepali and romanised Nepali ("nau aath", "नौ आठ") converted to digits, leetspeak undone | "९८ ४१ ..." , "nine-eight-four...", "9 8 4 1" |
+| 2. Rules | Patterns for Nepal mobiles (97 or 98 plus eight digits), landlines, +977, emails, URLs including shorteners, @handles, app names, eSewa and Khalti IDs, bank account shapes | The direct swaps, in under a millisecond |
+| 3. Thread context | Layers 1 and 2 run over the last five messages joined, not one message at a time | A number sent two or three digits per message |
+| 4. Intent classifier | A multilingual model fine-tuned on our own labelled messages (an LLM call with a strict JSON schema until there is enough data) scores each message for intent to move the deal off Saait | "my number is in my bio", "call me the usual way", "let's talk on the other app", romanised Nepali variants |
+| 5. Images | QR and barcode decoding (ZXing), OCR for digits and handles (Tesseract, or a cloud vision API), a vision model asked "is this a payment screen or a contact card", and a perceptual hash of every blocked image so a crop or re-screenshot of it is caught | eSewa and Khalti QR codes, bank screenshots, a business card photo, a handwritten number |
+| 6. Voice notes | Transcribed (Whisper or a cloud equivalent) and run through layers 1 to 4; voice notes are off until a deposit is paid | A number spoken aloud |
+| 7. Behaviour | Three blocked attempts in a day, edit-and-resend after a block, an enquiry followed by a calendar block for that date, a thread that goes quiet right after an unblocked message asking for "the number" | The people who worked around the filter |
+
+Decisions by score: a rule hit or a high classifier score blocks; a middle score delivers the message but puts it on the operator's queue; a low score delivers. The text layers answer in under 300 ms so chat feels instant; images and voice show a short "checking" state and are delivered or blocked when the scan returns.
+
+Every appeal outcome and every operator decision becomes a labelled example, and the classifier is retrained monthly on them. The target is under 2% of blocked messages overturned on appeal; above that, the thresholds move.
+
+Privacy: the terms say messages are screened by software before delivery; messages are encrypted at rest; operators read only what the checker flags; chat is kept for 12 months after the event and then deleted. No operator reads a thread that was never flagged.
 
 ### What the sender sees
 
@@ -197,6 +218,22 @@ Figma page "Redesign v2 · web", desktop at 1440 wide. The phone versions follow
 | Business | Today (level, inbox, bookings), Find crew (anonymous freelancers), Rewards and plan |
 | Freelancer | Today (alias, job offers, level ladder), Chat with a business where a payment QR is blocked |
 | Operator | Moderation queue for flagged messages, Leakage signals |
+
+## 9. Location: near you, not a city list
+
+The site today offers four cities in a dropdown. Nepal has 753 local units and most weddings happen at a party palace or a home, not in a city centre, so a list never fits. The venue is a point, not a city.
+
+**Where the point comes from, in order:**
+
+1. The phone or browser location, asked for once with the reason shown ("to find businesses who can reach your venue"). Used for the query and never stored.
+2. A typed place: a `places` table of districts, municipalities, wards, well-known chowks and party palaces, with name and Nepali name, searched as the client types. OpenStreetMap Nominatim is the fallback for anything not in the table, and every Nominatim hit is added to the table for next time.
+3. If both are refused, a weak default from the IP address, labelled "Butwal area" so the client knows to correct it.
+
+**What the client sees.** The home screen says "Shooting near Traffic Chowk, Butwal" with a pin, and under it four or five chips: "Near me" plus the nearest places with their distance ("Bhairahawa · 22 km"). Results list the businesses whose service radius reaches the point, each with its distance ("3 km away"). The order stays open slots, then rating, with distance as the tiebreaker, and never price. The reach chip on results reads "Near Traffic Chowk · within 30 km" and opens to widen or narrow it.
+
+**When nobody reaches the point.** Show the three nearest businesses with their distance and travel charge, and offer the urgent broadcast widened to the next cluster rather than an empty page.
+
+**Code.** `searchFreeOnDate` takes `{ lat, lng, radiusKm }` instead of a city slug; the haversine and service-radius filter already exist. A `places` table replaces `cities` as the thing clients pick; `cities` stays as the provider's home cluster and the seed grouping. The booking already stores the venue pin at lock time; nothing else about position is kept. Provider onboarding already asks for a pin and a service radius.
 
 ## Decisions needed from the founder
 
