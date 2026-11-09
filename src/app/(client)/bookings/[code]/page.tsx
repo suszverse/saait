@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { PayoutQr } from "@/components/booking/payout-qr";
 import { BottomNav, ButtonLink, CheckIcon, StatusChip } from "@/components/ui";
 import { formatRs, paisa } from "@/lib/money";
 import { bsLongWithGregorian, todayInNepal } from "@/lib/nepali-date";
@@ -93,6 +94,11 @@ export default async function BookingPage({ params }: PageProps<"/bookings/[code
             <p className="text-meta text-stone">Phone numbers are shared 48 hours before your event.</p>
           </section>
         )}
+        <PayoutQr
+          bookingCode={b.code}
+          bookingStatus={b.status}
+          provider={{ kycStatus: p.kycStatus, payoutMethod: p.payoutMethod, payoutAccountName: p.payoutAccountName, payoutAccountNumber: p.payoutAccountNumber }}
+        />
         {b.status === "held" && !lapsed && <ButtonLink href={`/bookings/${b.code}/pay`}>Pay {formatRs(paisa(b.depositAmount + b.bookingFee))} to lock</ButtonLink>}
         {lapsed && (
           <p className="rounded-card bg-tint px-4 py-3.5 text-small">
