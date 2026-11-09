@@ -6,10 +6,11 @@
  * Usage: pnpm db:seed
  */
 import nextEnv from "@next/env";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { fromBs } from "../../lib/nepali-date";
+import { currentAgreementVersion } from "../agreement";
 import * as s from "./schema";
 import { CATEGORIES, CITIES, DEMO_CLIENT, OPERATORS, PLACES, PROVIDERS, SAAIT_FALGUN_2083 } from "./seed-data";
 
@@ -118,6 +119,19 @@ async function seedIn(db: DB) {
     await db.insert(s.availabilityDays).values({ providerId: himal.id, day: fromBs({ year: 2083, month: 11, day: 12 }), status: "blocked" }).onConflictDoNothing();
   }
 
+  // Seeded accounts have accepted the current terms, so the login flow does not
+  // stop them at /join/agree and the e2e journeys run as before. Idempotent on
+  // (user, version); a new terms version seeds a new acceptance on re-run.
+  const seededPhones = [...OPERATORS.map((o) => o.phone), DEMO_CLIENT.phone, ...PROVIDERS.map((p) => p.phone)];
+  const seededUsers = await db.select({ id: s.users.id }).from(s.users).where(inArray(s.users.phone, seededPhones));
+  const version = currentAgreementVersion();
+  for (const u of seededUsers) {
+    await db
+      .insert(s.agreementAcceptances)
+      .values({ userId: u.id, version })
+      .onConflictDoNothing({ target: [s.agreementAcceptances.userId, s.agreementAcceptances.version] });
+  }
+
   const counts = await db.execute(sql`select
     (select count(*) from cities)::int as cities,
     (select count(*) from service_categories)::int as categories,
@@ -127,7 +141,8 @@ async function seedIn(db: DB) {
     (select count(*) from provider_profiles where kyc_status = 'verified')::int as verified,
     (select count(*) from provider_profiles where kyc_status = 'verified' and kind = 'studio' and plan in ('pro', 'studio'))::int as listed,
     (select count(*) from packages)::int as packages,
-    (select count(*) from users)::int as users`);
+    (select count(*) from users)::int as users,
+    (select count(*) from agreement_acceptances)::int as agreed`);
   return counts[0];
 }
 

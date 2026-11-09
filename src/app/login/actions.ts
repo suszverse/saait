@@ -2,8 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { hasAcceptedCurrent } from "@/server/agreement";
 import { otp } from "@/server/auth/service";
 import { getSession } from "@/server/auth/session";
+import { db } from "@/server/db";
 import { normalizeNepalPhone } from "@/server/sms";
 
 export type LoginState = { step: "phone" | "code"; phone?: string; error?: string; next: string };
@@ -16,7 +18,7 @@ const prevState = z
 /** Only same-site relative paths, so `next` cannot send anyone off-site. */
 const nextPath = z
   .string()
-  .regex(/^\/(?!\/)[\w\-/?=&%.]*$/)
+  .regex(/^\/(?!\/)[\w\-/?=&%.+,]*$/)
   .catch("/");
 
 const phoneSchema = z.object({ phone: z.string().trim().min(1, "Enter your mobile number."), next: nextPath });
@@ -70,7 +72,14 @@ export async function verifyCode(rawPrev: LoginState, form: FormData): Promise<L
   session.pendingPhone = undefined;
   await session.save();
   const home = r.user.role === "provider" ? "/provider" : r.user.role === "client" ? "/" : "/admin/kyc";
-  redirect(next !== "/" ? next : home);
+  const target = next !== "/" ? next : home;
+  // Everyone accepts the current terms once. A `next` already on the agreement
+  // screen (from /join, carrying its kind) is kept as is; anything else is
+  // wrapped so the user lands where they were going after agreeing.
+  if (!(await hasAcceptedCurrent(db(), r.user.id))) {
+    redirect(target.startsWith("/join/agree") ? target : `/join/agree?next=${encodeURIComponent(target)}`);
+  }
+  redirect(target);
 }
 
 export async function signOut() {
