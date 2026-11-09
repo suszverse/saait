@@ -10,6 +10,7 @@ Read `docs/system-plan.md` before changing anything. It is the source of truth f
 - Colours: Ink #1F1D2B, Stone #6A6775, Line #E4E0D8, Sindoor #B3121F (the single commit action and errors), Marigold #E89B00 (wedding dates and urgent), Teal #0E6B63 (verified, success). White ground, no shadows, one-pixel lines. Dark mode is a second mode on the same tokens (ground #141320, Ink #F3F1EC, Line #2E2C3A; the full table is in `docs/proposals/leakage-and-rewards.md` section 14); it follows the device and can be overridden from the header.
 - Type: Mukta only, Devanagari-first. Weights 400 to 800 carry hierarchy.
 - Radii: 12 controls and day cells, 14 buttons and inputs, 16 tiles and cards, 999 chips. Spacing on a 4 px grid. Phone gutter 20 px, desktop 64 px.
+- UX copy never uses internal vocabulary. "Anonymous", "alias", "tier", "strike", "leak", "operator", "checker", "flagged" are business-logic words for docs and the operator desk only. To users: "your name and number stay private until you are hired", "crew", "held message" / "Not sent", "our team", "a job taken outside Saait". Plain sentences, second person, no jargon.
 - Sindoor appears at most once per screen. Marigold buttons belong to the urgent flow only. Packages are never sorted cheapest-first by default.
 
 ## Conventions (when code lands)

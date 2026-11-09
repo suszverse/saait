@@ -45,6 +45,10 @@ The redesign for business and freelancer tiers, secure chat and rewards, at 1440
 
 New components on the Design system page: Chat bubble (Incoming, Outgoing, Blocked, System), Level badge (New, Trusted, Proven, Top), Stat tile, Alias avatar, Web header (Client, Business, Freelancer), Operator sidebar, Business card, Crew card, Thread row, Flag row, and ten icons (Message, Gift, Star, Flag, Eye off, QR, Send, Users, Blocked, Phone).
 
+Copy rule (founder, 2026-11-09): "anonymous" and "alias" are business-logic words, never UX copy. Screens say "private crew profile", "your name and number stay private until you are hired", "held message" rather than "strike", and "our team" rather than "operator". The operator desk (O1, O2) keeps its working vocabulary.
+
+Placeholders: every neutral image block on the page now carries one of six generated wedding photographs (row "Photo assets"). They stand in for real portfolio work and must be replaced before any public use.
+
 Choices made while designing, to confirm in review:
 
 - Sindoor stays at one use per screen. On chat screens the "Not sent" label is the one use, so send and lock buttons there are Ink or outlined. On the operator review screen the confirm button is the one use, so "Not sent" is Ink there.
