@@ -21,6 +21,8 @@ Every account accepts this on sign-up with one checkbox, after a screen that sho
 - Clients must be 18 or older. Freelancers and business owners must be 18 or older and legally able to work in Nepal.
 - You may not use Saait to find someone and then take the job elsewhere. Doing so forfeits rewards, lowers placement and, when repeated, closes the account. Saait never fines or charges for this.
 - Reviews must be about a booking that happened on Saait. Fake or traded reviews are removed and penalised.
+- Reviews are free. Saait never charges anyone to leave, show, feature, hide or remove a review, and never sells review placement. Only the client of a completed booking can review it, within 60 days, and the provider gets one public reply.
+- Portfolio limits depend on the plan or level (Business plan 20 photos and 15 clips; freelancers 12 and 6 at New, growing with level). Uploads are screened the same way as chat images.
 
 ## 3. Chat rules
 

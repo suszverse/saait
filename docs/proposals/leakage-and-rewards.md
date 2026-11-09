@@ -239,6 +239,33 @@ The site today offers four cities in a dropdown. Nepal has 753 local units and m
 
 The founder's decision on 2026-11-09: every rule above is written into the terms, the privacy policy and the chat rules, and accepted at sign-up. `docs/legal/terms-draft.md` holds the plain-language draft for the lawyer. Sign-up shows the seven rules in full (J2) with one checkbox; the terms page (J3) uses the same sentences. Changes are announced in the app 30 days ahead. The lawyer's open questions are at the end of the draft.
 
+## 11. Profiles, portfolios and reviews
+
+Founder's direction on 2026-11-09: the profile is the showcase, its size depends on the plan or level, and reviews are free.
+
+### Portfolio limits
+
+| Account | Photos | Clips | Why |
+|---|---|---|---|
+| Business plan | 20 | 15 | The plan pays for the showcase; enough for a wedding story without a gallery that never ends |
+| Freelancer · New | 12 | 6 | Free account; enough to be hired once |
+| Freelancer · Trusted | 16 | 10 | Earned, so the ladder shows on the profile |
+| Freelancer · Proven and Top | 20 | 15 | Same as a business, since Top can open a business profile |
+
+Clips are up to 60 seconds and 200 MB, transcoded on upload; photos up to 20 MB. The counter on the editor reads "18 of 20 photos". When the limit is reached, the oldest item has to be removed to add one; nothing is sold above the limit. Every upload is screened like a chat image: QR codes, phone numbers, handles, visible logos of other platforms and watermarks with a name or number are rejected with the reason. Freelancer uploads are also checked for the freelancer's own face when the profile is anonymous; a business profile may show faces with the client's consent.
+
+### Reviews are free
+
+Leaving a review, showing it and replying to it costs nothing, for every account, and that stays in the terms. Saait never charges to collect, feature, hide or remove a review, and never sells review placement. Only a client with a completed booking can review it, within 60 days; the review shows the booking month and package so it can be checked. Businesses and freelancers get one public reply. A review is removed only for abuse, contact details or a confirmed fake, and the operator records why. The Rs 100 credit for a review (section 7) is a reward from Saait for taking the time, not a payment from the provider, and it is paid for any rating.
+
+### Screens
+
+Figma row "Profiles": P1 Business: profile and portfolio editor (counts against the plan limit, upload screening, free reviews with reply); P2 Freelancer: alias profile as a business sees it (alias, level, reliability, portfolio, no name or face); P3 Freelancer: profile and portfolio editor (limits that grow with level). The client-facing business profile is C3.
+
+## 12. Later: equipment rental
+
+A marketplace for camera and equipment rental is a secondary line for after the booking platform is running. It fits the same shape (verified owner, calendar, deposit through Saait, balance direct, chat with the same checker) and the same accounts, so nothing in the data model should rule it out: listings become a second kind of bookable thing with a per-day price and a deposit. Not planned, not designed; recorded here so it is not forgotten.
+
 ## Decisions needed from the founder
 
 1. Can clients ever reach a freelancer directly, for example only through the urgent flow or as a backup, or is the freelancer side business-only?
