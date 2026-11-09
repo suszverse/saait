@@ -26,3 +26,18 @@ export async function requireRole(roles: Role[], next: string): Promise<CurrentU
   if (!roles.includes(u.role)) notFound();
   return u;
 }
+
+export type ProviderProfile = typeof s.providerProfiles.$inferSelect;
+export type ProviderKind = ProviderProfile["kind"];
+
+/**
+ * Gate for the business (studio) and crew (freelancer) areas. Clients and
+ * providers of the other kind get a 404 so neither area confirms the other
+ * exists; signed-out visitors are sent to log in and come back to `next`.
+ */
+export async function requireProviderKind(kind: ProviderKind, next: string): Promise<{ user: CurrentUser; profile: ProviderProfile }> {
+  const user = await requireUser(next);
+  const [profile] = await db().select().from(s.providerProfiles).where(eq(s.providerProfiles.userId, user.id));
+  if (!profile || profile.kind !== kind) notFound();
+  return { user, profile };
+}
