@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { PackagePicker } from "@/components/client/package-picker";
 import { Button, CheckIcon, ChevronLeftIcon, StatusChip, buttonClass } from "@/components/ui";
+import { LevelBadge } from "@/components/ui/level-badge";
 import { formatRs, type Paisa } from "@/lib/money";
 import { bsDayMonth, type IsoDate } from "@/lib/nepali-date";
 import { db } from "@/server/db";
 import { getVerifiedProvider, isSaait, slotsLeft } from "@/server/providers";
+import { levelsFor } from "@/server/rewards/ledger";
 import { parseClientQuery, queryString } from "@/server/client/query";
 
 export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Promise<Metadata> {
@@ -28,8 +30,9 @@ export default async function ProviderPage({ params, searchParams }: PageProps<"
   const q = parseClientQuery(sp);
   const p = await getVerifiedProvider(db(), slug);
   if (!p) notFound();
-  const [saait, slots] = await Promise.all([isSaait(db(), q.date as IsoDate), slotsLeft(db(), [p.id], q.date as IsoDate)]);
+  const [saait, slots, levels] = await Promise.all([isSaait(db(), q.date as IsoDate), slotsLeft(db(), [p.id], q.date as IsoDate), levelsFor(db(), [p.userId])]);
   const left = slots.get(p.id) ?? 0;
+  const level = levels.get(p.userId) ?? "New";
   const inCategory = p.packages.filter((k) => k.category.slug === q.category);
   const packages = inCategory.length ? inCategory : p.packages;
   const heading = `${packages[0]?.category.shortName ?? "All"} packages`;
@@ -68,6 +71,7 @@ export default async function ProviderPage({ params, searchParams }: PageProps<"
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-profile font-extrabold">{p.displayName}</h1>
               <StatusChip type="verified">{p.kind === "studio" ? "Verified studio" : "Verified"}</StatusChip>
+              <LevelBadge level={level} />
             </div>
             <p className="text-small text-stone">
               {[

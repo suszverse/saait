@@ -85,6 +85,7 @@ export function haversineKm(a: LatLng, b: LatLng): number {
 
 export type SearchResult = {
   id: string;
+  userId: string;
   slug: string;
   name: string;
   cityName: string;
@@ -142,6 +143,7 @@ export async function searchFreeOnDate(db: Db, q: SearchQuery, now = new Date())
     if (band.max != null && fromPrice >= band.max) continue;
     results.push({
       id: e.p.id,
+      userId: e.p.userId,
       slug: e.p.slug,
       name: e.p.displayName,
       cityName: e.homeCity?.name ?? "",

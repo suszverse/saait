@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { BottomNav, ChevronLeftIcon, FilterChipLink, SaaitDot, ShieldIcon, StatusChip } from "@/components/ui";
+import { LevelBadge } from "@/components/ui/level-badge";
 import { formatRs, type Paisa } from "@/lib/money";
 import { bsDayMonth } from "@/lib/nepali-date";
 import { db } from "@/server/db";
-import { BUDGET_BANDS, searchFreeOnDate, type BudgetBand } from "@/server/search";
+import { levelsFor } from "@/server/rewards/ledger";
+import { BUDGET_BANDS, searchFreeOnDate, type BudgetBand, type SearchResult } from "@/server/search";
 import { parseClientQuery, queryString } from "@/server/client/query";
 
 export const metadata: Metadata = { title: "Free on this date" };
@@ -15,10 +17,21 @@ function replies(minutes: number | null) {
   return minutes < 60 ? `replies in ${minutes} min` : `replies in ${Math.round(minutes / 60)} hour${minutes >= 120 ? "s" : ""}`;
 }
 
+/**
+ * Levels are keyed by user, and SearchResult does not yet carry userId (that
+ * field lives in src/server/search.ts). Until it does, no badge is shown rather
+ * than a false "New"; once the field lands every row lights up with no change here.
+ */
+function userIdOf(r: SearchResult): string | undefined {
+  return "userId" in r && typeof r.userId === "string" ? r.userId : undefined;
+}
+
 export default async function ResultsPage({ searchParams }: PageProps<"/results">) {
   await connection();
   const q = parseClientQuery(await searchParams);
   const { place, category, saait, results } = await searchFreeOnDate(db(), q);
+  // One bulk lookup for every provider on the page; ordering of results is untouched.
+  const levels = await levelsFor(db(), results.map(userIdOf).filter((id): id is string => Boolean(id)));
   const title = `${category?.shortName ?? "Providers"}, ${bsDayMonth(q.date)}`;
 
   return (
@@ -53,7 +66,10 @@ export default async function ResultsPage({ searchParams }: PageProps<"/results"
         </p>
 
         <ul className="mt-2 grid gap-x-8 md:grid-cols-2">
-          {results.map((r) => (
+          {results.map((r) => {
+            const userId = userIdOf(r);
+            const level = userId ? levels.get(userId) : undefined;
+            return (
             <li key={r.id} className="border-b border-line py-3.5">
               <Link href={`/p/${r.slug}?${queryString(q)}`} className="grid grid-cols-[112px_minmax(0,1fr)] gap-3.5 no-underline">
                 <span aria-hidden="true" className="block aspect-[4/5] rounded-card" style={{ background: r.tones[0] ?? "#D9D4CB" }} />
@@ -61,6 +77,7 @@ export default async function ResultsPage({ searchParams }: PageProps<"/results"
                   <span className="flex items-center gap-2">
                     <span className="truncate text-lead font-bold">{r.name}</span>
                     <StatusChip type="verified" size="sm" />
+                    {level && <LevelBadge level={level} size="sm" />}
                   </span>
                   <span className="text-meta text-stone">
                     {[r.cityName, r.rating ? `${r.rating.toFixed(1)} (${r.ratingCount})` : "New", replies(r.responseMinutes)].filter(Boolean).join(" · ")}
@@ -77,7 +94,8 @@ export default async function ResultsPage({ searchParams }: PageProps<"/results"
                 </span>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
 
         {results.length === 0 && (

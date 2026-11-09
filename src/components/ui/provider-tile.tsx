@@ -1,9 +1,11 @@
 import Link from "next/link";
+import type { LevelName } from "@/lib/levels";
 import { CheckIcon } from "./icons";
+import { LevelBadge } from "./level-badge";
 
 /**
  * Grid tile: 4:5 portfolio image (grey tone until real portfolios arrive),
- * Verified badge, name, city and rating, from-price.
+ * Verified badge and level badge, name, city and rating, from-price.
  */
 export function ProviderTile({
   href,
@@ -12,6 +14,7 @@ export function ProviderTile({
   price,
   tone,
   verified = true,
+  level,
 }: {
   href: string;
   name: string;
@@ -19,16 +22,22 @@ export function ProviderTile({
   price: string;
   tone: string;
   verified?: boolean;
+  level?: LevelName;
 }) {
   return (
     <Link href={href} className="flex min-w-0 flex-col gap-2 no-underline">
       <span className="relative block aspect-[4/5] overflow-hidden rounded-card">
         {/* Placeholder until real portfolio images arrive; decorative. */}
         <span aria-hidden="true" className="absolute inset-0" style={{ background: tone }} />
-        {verified && (
-          <span className="absolute top-2.5 left-2.5 flex h-6.5 items-center gap-1 rounded-chip bg-ground px-2.5 text-micro font-bold text-teal">
-            <CheckIcon size={12} strokeWidth={3} />
-            Verified
+        {(verified || level) && (
+          <span className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+            {verified && (
+              <span className="flex h-6.5 items-center gap-1 rounded-chip bg-ground px-2.5 text-micro font-bold text-teal">
+                <CheckIcon size={12} strokeWidth={3} />
+                Verified
+              </span>
+            )}
+            {level && <LevelBadge level={level} />}
           </span>
         )}
       </span>
