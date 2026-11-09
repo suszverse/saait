@@ -213,7 +213,7 @@ Figma page "Redesign v2 · web", desktop at 1440 wide. The phone versions follow
 
 | Who | Screens |
 |---|---|
-| Everyone | Join: choose business or freelancer |
+| Everyone | Join: choose business or freelancer; Agree to how Saait works (the seven rules, J2); Terms, privacy and chat rules page (J3) |
 | Client | Home, Results (businesses only), Business profile, Chat with a blocked message, Lock the date with credit applied, Booking after lock (verified balance QR, contact reveal), Rewards and credit |
 | Business | Today (level, inbox, bookings), Find crew (anonymous freelancers), Rewards and plan |
 | Freelancer | Today (alias, job offers, level ladder), Chat with a business where a payment QR is blocked |
@@ -234,6 +234,10 @@ The site today offers four cities in a dropdown. Nepal has 753 local units and m
 **When nobody reaches the point.** Show the three nearest businesses with their distance and travel charge, and offer the urgent broadcast widened to the next cluster rather than an empty page.
 
 **Code.** `searchFreeOnDate` takes `{ lat, lng, radiusKm }` instead of a city slug; the haversine and service-radius filter already exist. A `places` table replaces `cities` as the thing clients pick; `cities` stays as the provider's home cluster and the seed grouping. The booking already stores the venue pin at lock time; nothing else about position is kept. Provider onboarding already asks for a pin and a service radius.
+
+## 10. Terms and the sign-up agreement
+
+The founder's decision on 2026-11-09: every rule above is written into the terms, the privacy policy and the chat rules, and accepted at sign-up. `docs/legal/terms-draft.md` holds the plain-language draft for the lawyer. Sign-up shows the seven rules in full (J2) with one checkbox; the terms page (J3) uses the same sentences. Changes are announced in the app 30 days ahead. The lawyer's open questions are at the end of the draft.
 
 ## Decisions needed from the founder
 

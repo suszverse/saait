@@ -39,6 +39,7 @@ The redesign for business and freelancer tiers, secure chat and rewards, at 1440
 | Businesses | B1 Today, B2 Find crew, B3 Rewards and plan |
 | Freelancers | F1 Today and job offers, F2 Chat with a blocked payment QR |
 | Operator desk | O1 Flagged messages, O2 Leakage signals |
+| Terms and agreement | J2 Join: agree to how Saait works (the seven rules, one checkbox), J3 Terms, privacy and chat rules (one page, sidebar contents) |
 
 New components on the Design system page: Chat bubble (Incoming, Outgoing, Blocked, System), Level badge (New, Trusted, Proven, Top), Stat tile, Alias avatar, Web header (Client, Business, Freelancer), Operator sidebar, Business card, Crew card, Thread row, Flag row, and ten icons (Message, Gift, Star, Flag, Eye off, QR, Send, Users, Blocked, Phone).
 
@@ -47,6 +48,7 @@ Choices made while designing, to confirm in review:
 - Sindoor stays at one use per screen. On chat screens the "Not sent" label is the one use, so send and lock buttons there are Ink or outlined. On the operator review screen the confirm button is the one use, so "Not sent" is Ink there.
 - Rewards and credit use Teal, not Marigold, because Marigold belongs to the urgent flow.
 - Crew are paid by the business directly, to the payout account Saait verified. This is the assumption in the proposal's open decision 2.
+- Every account accepts the seven rules (message checking, 48-hour contact reveal, payments through the booking page, non-cash rewards, location not stored, verification, data retention) on J2 before sign-up completes. The wording is the same on J2, J3 and in `docs/legal/terms-draft.md`, so the app never says one thing and the terms another.
 - Location is a point, not a city (proposal section 9). C1 shows "Shooting near Traffic Chowk, Butwal" with a Pin icon, nearby-place chips with distances and a one-line note that the position is not stored. C2's reach chip reads "Near Traffic Chowk · within 30 km" and every card shows its distance. New icon: Icon/Pin.
 
 ## Page "Web screens"
