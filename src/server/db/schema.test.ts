@@ -30,7 +30,7 @@ async function rejects(p: Promise<unknown>, pattern: RegExp) {
 
 beforeAll(async () => {
   if (!url || !/_test(\?|$)/.test(url)) throw new Error("DATABASE_URL_TEST must end in _test");
-  await client`truncate table users, cities, service_categories, auspicious_dates restart identity cascade`;
+  await client`truncate table users, cities, places, service_categories, auspicious_dates restart identity cascade`;
   const [a, b, c] = await db
     .insert(s.users)
     .values([
@@ -188,6 +188,20 @@ describe("schema constraints", () => {
       .values({ providerId: p.id, clientId, day: "2027-02-27", description: "Custom", price: 4_400_000, createdById: clientId, expiresAt })
       .returning();
     await db.insert(s.dateHolds).values({ providerId: p.id, offerId: offer.id, clientId, day: "2027-02-27", expiresAt });
+  });
+
+  it("keeps places inside Nepal's bounding box", async () => {
+    await rejects(
+      db.insert(s.places).values({ slug: "nowhere", name: "Nowhere", kind: "chowk", lat: 40, lng: 83.4483, district: "Rupandehi" }),
+      /places_in_nepal|check/,
+    );
+    const [p] = await db
+      .insert(s.places)
+      .values({ slug: "traffic-chowk-butwal", name: "Traffic Chowk", nameNp: "ट्राफिक चोक", kind: "chowk", lat: 27.7006, lng: 83.4483, district: "Rupandehi" })
+      .returning();
+    expect(p.kind).toBe("chowk");
+    expect(p.source).toBe("seed");
+    expect(p.cityId).toBeNull();
   });
 
   it("makes payments idempotent per gateway reference", async () => {

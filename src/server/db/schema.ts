@@ -73,6 +73,7 @@ export const planEnum = pgEnum("plan", ["free", "pro", "studio"]);
 export const disputeStatusEnum = pgEnum("dispute_status", ["open", "decided"]);
 export const offerStatusEnum = pgEnum("offer_status", ["sent", "accepted", "declined", "expired"]);
 export const themePrefEnum = pgEnum("theme_pref", ["system", "light", "dark"]);
+export const placeKindEnum = pgEnum("place_kind", ["district", "municipality", "ward", "chowk", "venue"]);
 
 // ---------- people ----------
 export const users = pgTable(
@@ -126,6 +127,33 @@ export const cities = pgTable("cities", {
   lng: doublePrecision("lng").notNull(),
   createdAt: createdAt(),
 });
+
+/**
+ * Places a client can type as a venue or search area: districts down to chowks
+ * and named venues. Coordinates are bounded to Nepal so a bad geocode cannot
+ * land a row in the sea.
+ */
+export const places = pgTable(
+  "places",
+  {
+    id: id(),
+    slug: text("slug").notNull().unique(),
+    name: text("name").notNull(),
+    nameNp: text("name_np"),
+    kind: placeKindEnum("kind").notNull(),
+    lat: doublePrecision("lat").notNull(),
+    lng: doublePrecision("lng").notNull(),
+    district: text("district").notNull(),
+    cityId: uuid("city_id").references(() => cities.id),
+    /** Where the row came from: seed | operator | geocoder. */
+    source: text("source").notNull().default("seed"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("places_name_lower_idx").on(sql`lower(${t.name})`),
+    check("places_in_nepal", sql`${t.lat} between 26.3 and 30.5 and ${t.lng} between 80.0 and 88.3`),
+  ],
+);
 
 export const serviceCategories = pgTable("service_categories", {
   id: id(),
