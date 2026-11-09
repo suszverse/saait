@@ -36,6 +36,13 @@
       "when": 1794225746654,
       "tag": "0004_chat_threads",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794226066334,
+      "tag": "0005_reward_ledger",
+      "breakpoints": true
     }
   ]
 }

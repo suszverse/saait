@@ -238,6 +238,46 @@ describe("schema constraints", () => {
     await rejects(db.insert(s.contactReveals).values({ bookingId: b.id, viewerId: clientId }), /contact_reveals_once_uq|duplicate/);
     await db.insert(s.contactReveals).values({ bookingId: b.id, viewerId: providerUserA });
   });
+
+  it("keeps the reward ledger append-only", async () => {
+    const [b] = await db.select().from(s.bookings).limit(1);
+    const [row] = await db
+      .insert(s.rewardLedger)
+      .values({ userId: clientId, kind: "points", amount: 50, reason: "on_time", bookingId: b.id })
+      .returning();
+    expect(row.amount).toBe(50);
+    await rejects(db.update(s.rewardLedger).set({ amount: 60 }).where(sqlEq(s.rewardLedger.id, row.id)), /append|reward_ledger/);
+    await rejects(db.delete(s.rewardLedger).where(sqlEq(s.rewardLedger.id, row.id)), /append|reward_ledger/);
+    await rejects(db.insert(s.rewardLedger).values({ userId: clientId, kind: "points", amount: 0, reason: "reset" }), /reward_amount_nonzero|check/);
+  });
+
+  it("writes each earning event once but lets spend rows repeat", async () => {
+    const [b] = await db.select().from(s.bookings).limit(1);
+    const earn = { userId: clientId, kind: "points" as const, amount: 100, reason: "booking_completed" as const, bookingId: b.id };
+    await db.insert(s.rewardLedger).values(earn);
+    await rejects(db.insert(s.rewardLedger).values(earn), /reward_ledger_once_uq|duplicate/);
+    // The same event for credit is a different row.
+    await db.insert(s.rewardLedger).values({ ...earn, kind: "credit", amount: 10_000 });
+    const spend = { userId: clientId, kind: "credit" as const, amount: -5_000, reason: "checkout_spend" as const, bookingId: b.id };
+    await db.insert(s.rewardLedger).values(spend);
+    await db.insert(s.rewardLedger).values(spend);
+  });
+
+  it("records a referral once per referee and never to oneself", async () => {
+    await rejects(db.insert(s.referrals).values({ referrerId: clientId, refereeId: clientId }), /referral_two_people|check/);
+    await db.insert(s.referrals).values({ referrerId: providerUserA, refereeId: clientId });
+    await rejects(db.insert(s.referrals).values({ referrerId: providerUserB, refereeId: clientId }), /referrals_referee_id_unique|duplicate/);
+    await db.update(s.users).set({ referralCode: "SAAIT-A1" }).where(sqlEq(s.users.id, providerUserA));
+    await rejects(db.update(s.users).set({ referralCode: "SAAIT-A1" }).where(sqlEq(s.users.id, providerUserB)), /users_referral_code_unique|duplicate/);
+  });
+
+  it("caps applied credit at the booking fee", async () => {
+    const [b] = await db.select().from(s.bookings).limit(1);
+    expect(b.creditApplied).toBe(0);
+    await db.update(s.bookings).set({ creditApplied: b.bookingFee }).where(sqlEq(s.bookings.id, b.id));
+    await rejects(db.update(s.bookings).set({ creditApplied: b.bookingFee + 1 }).where(sqlEq(s.bookings.id, b.id)), /booking_credit_within_fee|check/);
+    await rejects(db.update(s.bookings).set({ creditApplied: -1 }).where(sqlEq(s.bookings.id, b.id)), /booking_credit_within_fee|check/);
+  });
 });
 
 import { eq as sqlEq } from "drizzle-orm";

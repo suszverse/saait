@@ -78,6 +78,23 @@ export const placeKindEnum = pgEnum("place_kind", ["district", "municipality", "
 export const messageStatusEnum = pgEnum("message_status", ["held", "delivered", "cleared"]);
 export const threadKindEnum = pgEnum("thread_kind", ["client_business", "business_crew"]);
 export const reportStatusEnum = pgEnum("report_status", ["open", "confirmed", "dismissed"]);
+/** Credit is spendable paisa off a booking fee; points are the reputation balance. */
+export const rewardKindEnum = pgEnum("reward_kind", ["credit", "points"]);
+export const rewardReasonEnum = pgEnum("reward_reason", [
+  "booking_completed",
+  "on_time",
+  "review_left",
+  "five_star",
+  "referral",
+  "report_confirmed",
+  "urgent_completed",
+  "crew_job_completed",
+  "no_show",
+  "checkout_spend",
+  "plan_month",
+  "expiry",
+  "reset",
+]);
 
 // ---------- people ----------
 export const users = pgTable(
@@ -93,6 +110,8 @@ export const users = pgTable(
     chatPausedUntil: timestamp("chat_paused_until", { withTimezone: true }),
     /** Rewards points cannot be earned or spent while frozen. */
     pointsFrozenUntil: timestamp("points_frozen_until", { withTimezone: true }),
+    /** Short code this user shares; a referee's sign-up with it writes a referrals row. */
+    referralCode: text("referral_code").unique(),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("users_phone_uq").on(t.phone)],
@@ -544,6 +563,8 @@ export const bookings = pgTable(
     bookingFee: money("booking_fee").notNull(),
     /** VAT inside the booking fee (fee x 13/113), for the invoice. */
     bookingFeeVat: money("booking_fee_vat").notNull().default(0),
+    /** Reward credit spent at checkout; only ever reduces the booking fee, never the deposit. */
+    creditApplied: money("credit_applied").notNull().default(0),
     urgentSurcharge: money("urgent_surcharge").notNull().default(0),
     balanceDue: money("balance_due").notNull(),
     currency: currency(),
@@ -564,6 +585,7 @@ export const bookings = pgTable(
       sql`${t.packagePrice} >= 0 and ${t.peakSurcharge} >= 0 and ${t.agreedTotal} >= 0 and ${t.balanceDue} >= 0 and ${t.depositAmount} <= ${t.agreedTotal} and ${t.addonsTotal} >= 0 and ${t.depositAmount} >= 0 and ${t.bookingFee} >= 0 and ${t.bookingFeeVat} >= 0 and ${t.urgentSurcharge} >= 0 and ${t.currency} = 'NPR'`,
     ),
     check("booking_money_consistent", sql`${t.agreedTotal} = ${t.packagePrice} + ${t.peakSurcharge} + ${t.addonsTotal} and ${t.balanceDue} = ${t.agreedTotal} - ${t.depositAmount}`),
+    check("booking_credit_within_fee", sql`${t.creditApplied} >= 0 and ${t.creditApplied} <= ${t.bookingFee}`),
   ],
 );
 
@@ -692,6 +714,61 @@ export const backupPoolMembers = pgTable(
   (t) => [
     primaryKey({ columns: [t.providerId, t.cityId, t.categoryId] }),
     check("standby_money", sql`${t.standbyFee} >= 0 and ${t.currency} = 'NPR'`),
+  ],
+);
+
+// ---------- rewards ----------
+/** One row per referee; the referrer is credited through the ledger when the referee's first booking completes. */
+export const referrals = pgTable(
+  "referrals",
+  {
+    id: id(),
+    referrerId: uuid("referrer_id").notNull().references(() => users.id),
+    refereeId: uuid("referee_id").notNull().references(() => users.id).unique(),
+    createdAt: createdAt(),
+  },
+  (t) => [check("referral_two_people", sql`${t.referrerId} <> ${t.refereeId}`)],
+);
+
+/**
+ * Append-only: a balance is the sum of a user's rows, and corrections are new
+ * rows with the opposite sign. A trigger in migration 0005 rejects UPDATE and
+ * DELETE. Each earning event may be written once per source row; spend,
+ * expiry and plan months recur, so the idempotency index skips those reasons.
+ */
+export const rewardLedger = pgTable(
+  "reward_ledger",
+  {
+    id: id(),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    kind: rewardKindEnum("kind").notNull(),
+    /** Signed: positive earns, negative spends or forfeits. Credit is NPR paisa, points are points. */
+    amount: bigint("amount", { mode: "number" }).notNull(),
+    reason: rewardReasonEnum("reason").notNull(),
+    bookingId: uuid("booking_id").references(() => bookings.id),
+    reviewId: uuid("review_id").references(() => reviews.id),
+    /** No foreign key yet; crew_jobs arrives in a later migration. */
+    crewJobId: uuid("crew_job_id"),
+    reportId: uuid("report_id").references(() => reports.id),
+    referralId: uuid("referral_id").references(() => referrals.id),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("reward_ledger_user_idx").on(t.userId, t.kind, t.createdAt),
+    uniqueIndex("reward_ledger_once_uq")
+      .on(
+        t.userId,
+        t.kind,
+        t.reason,
+        sql`coalesce(${t.bookingId}, '00000000-0000-0000-0000-000000000000'::uuid)`,
+        sql`coalesce(${t.reviewId}, '00000000-0000-0000-0000-000000000000'::uuid)`,
+        sql`coalesce(${t.crewJobId}, '00000000-0000-0000-0000-000000000000'::uuid)`,
+        sql`coalesce(${t.reportId}, '00000000-0000-0000-0000-000000000000'::uuid)`,
+        sql`coalesce(${t.referralId}, '00000000-0000-0000-0000-000000000000'::uuid)`,
+      )
+      .where(sql`${t.reason} not in ('checkout_spend', 'expiry', 'plan_month')`),
+    check("reward_amount_nonzero", sql`${t.amount} <> 0`),
   ],
 );
 
