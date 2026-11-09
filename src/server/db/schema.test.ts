@@ -210,6 +210,34 @@ describe("schema constraints", () => {
     await db.insert(s.payments).values(row);
     await rejects(db.insert(s.payments).values(row), /payments_gateway_ref_uq|duplicate/);
   });
+
+  it("requires a thread to have two different parties and dedupes threads with no day", async () => {
+    const [p] = await db.select().from(s.providerProfiles).limit(1);
+    await rejects(
+      db.insert(s.chatThreads).values({ kind: "client_business", aUserId: clientId, bUserId: clientId, providerId: p.id }),
+      /thread_two_parties|check/,
+    );
+    const pair = { kind: "client_business" as const, aUserId: clientId, bUserId: providerUserA, providerId: p.id };
+    const [t] = await db.insert(s.chatThreads).values(pair).returning();
+    expect(t.lastMessageAt).toBeNull();
+    await rejects(db.insert(s.chatThreads).values(pair), /chat_threads_pair_day_uq|duplicate/);
+    await db.insert(s.chatThreads).values({ ...pair, day: "2027-02-24" });
+  });
+
+  it("requires a message to belong to a thread or an enquiry", async () => {
+    const [t] = await db.select().from(s.chatThreads).limit(1);
+    await rejects(db.insert(s.messages).values({ senderId: clientId, body: "namaste" }), /message_has_home|check/);
+    const [m] = await db.insert(s.messages).values({ threadId: t.id, senderId: clientId, body: "namaste" }).returning();
+    expect(m.status).toBe("delivered");
+    expect(m.enquiryId).toBeNull();
+  });
+
+  it("records a contact reveal once per booking and viewer", async () => {
+    const [b] = await db.select().from(s.bookings).limit(1);
+    await db.insert(s.contactReveals).values({ bookingId: b.id, viewerId: clientId });
+    await rejects(db.insert(s.contactReveals).values({ bookingId: b.id, viewerId: clientId }), /contact_reveals_once_uq|duplicate/);
+    await db.insert(s.contactReveals).values({ bookingId: b.id, viewerId: providerUserA });
+  });
 });
 
 import { eq as sqlEq } from "drizzle-orm";

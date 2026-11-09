@@ -74,6 +74,10 @@ export const disputeStatusEnum = pgEnum("dispute_status", ["open", "decided"]);
 export const offerStatusEnum = pgEnum("offer_status", ["sent", "accepted", "declined", "expired"]);
 export const themePrefEnum = pgEnum("theme_pref", ["system", "light", "dark"]);
 export const placeKindEnum = pgEnum("place_kind", ["district", "municipality", "ward", "chowk", "venue"]);
+/** Screening holds a message before the other side sees it; cleared means a reviewer let it through. */
+export const messageStatusEnum = pgEnum("message_status", ["held", "delivered", "cleared"]);
+export const threadKindEnum = pgEnum("thread_kind", ["client_business", "business_crew"]);
+export const reportStatusEnum = pgEnum("report_status", ["open", "confirmed", "dismissed"]);
 
 // ---------- people ----------
 export const users = pgTable(
@@ -85,6 +89,10 @@ export const users = pgTable(
     role: roleEnum("role").notNull().default("client"),
     phoneLockedUntil: timestamp("phone_locked_until", { withTimezone: true }),
     theme: themePrefEnum("theme").notNull().default("system"),
+    /** Set when a confirmed report pauses this user's chat; null means they may write. */
+    chatPausedUntil: timestamp("chat_paused_until", { withTimezone: true }),
+    /** Rewards points cannot be earned or spent while frozen. */
+    pointsFrozenUntil: timestamp("points_frozen_until", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("users_phone_uq").on(t.phone)],
@@ -373,6 +381,7 @@ export const availabilityDays = pgTable(
     status: dayStatusEnum("status").notNull().default("open"),
     capacity: smallint("capacity"),
     createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.providerId, t.day] })],
 );
@@ -408,13 +417,82 @@ export const enquiries = pgTable("enquiries", {
   createdAt: createdAt(),
 });
 
-export const messages = pgTable("messages", {
+/**
+ * One conversation between two accounts about a business. Client to business
+ * threads carry a booking or a day; business to crew threads carry neither.
+ * Participants are stored as (a, b) in the order the caller normalises them.
+ */
+export const chatThreads = pgTable(
+  "chat_threads",
+  {
+    id: id(),
+    kind: threadKindEnum("kind").notNull(),
+    aUserId: uuid("a_user_id").notNull().references(() => users.id),
+    bUserId: uuid("b_user_id").notNull().references(() => users.id),
+    providerId: uuid("provider_id").notNull().references(() => providerProfiles.id),
+    bookingId: uuid("booking_id").references((): AnyPgColumn => bookings.id),
+    day: date("day"),
+    createdAt: createdAt(),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  },
+  (t) => [
+    // Null days collapse onto the epoch so two general threads for the same pair dedupe too.
+    uniqueIndex("chat_threads_pair_day_uq").on(t.aUserId, t.bUserId, t.providerId, sql`coalesce(${t.day}, '1970-01-01'::date)`),
+    check("thread_two_parties", sql`${t.aUserId} <> ${t.bUserId}`),
+  ],
+);
+
+/** Belongs to a chat thread (Phase 3) or to a legacy enquiry (Phase 1), never neither. */
+export const messages = pgTable(
+  "messages",
+  {
+    id: id(),
+    enquiryId: uuid("enquiry_id").references(() => enquiries.id, { onDelete: "cascade" }),
+    threadId: uuid("thread_id").references(() => chatThreads.id, { onDelete: "cascade" }),
+    senderId: uuid("sender_id").notNull().references(() => users.id),
+    body: text("body").notNull(),
+    status: messageStatusEnum("status").notNull().default("delivered"),
+    /** Why screening held it, shown to the sender. */
+    reason: text("reason"),
+    /** Which screening layer fired (1 = text patterns, 2 = normalised digits, 3 = image/QR). */
+    heldLayer: smallint("held_layer"),
+    attachmentKey: text("attachment_key"),
+    appealedAt: timestamp("appealed_at", { withTimezone: true }),
+    reviewedById: uuid("reviewed_by_id").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewOutcome: text("review_outcome"), // cleared | upheld
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("messages_thread_created_idx").on(t.threadId, t.createdAt),
+    check("message_has_home", sql`${t.threadId} is not null or ${t.enquiryId} is not null`),
+  ],
+);
+
+/** A user flags a business (optionally pointing at a thread); an operator decides. */
+export const reports = pgTable("reports", {
   id: id(),
-  enquiryId: uuid("enquiry_id").notNull().references(() => enquiries.id, { onDelete: "cascade" }),
-  senderId: uuid("sender_id").notNull().references(() => users.id),
-  body: text("body").notNull(),
+  reporterId: uuid("reporter_id").notNull().references(() => users.id),
+  subjectProviderId: uuid("subject_provider_id").notNull().references(() => providerProfiles.id),
+  threadId: uuid("thread_id").references(() => chatThreads.id),
+  reason: text("reason").notNull(),
+  status: reportStatusEnum("status").notNull().default("open"),
+  decidedById: uuid("decided_by_id").references(() => users.id),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
   createdAt: createdAt(),
 });
+
+/** Contact details unlock after the deposit; each viewer's first look is recorded once. */
+export const contactReveals = pgTable(
+  "contact_reveals",
+  {
+    id: id(),
+    bookingId: uuid("booking_id").notNull().references((): AnyPgColumn => bookings.id),
+    viewerId: uuid("viewer_id").notNull().references(() => users.id),
+    revealedAt: timestamp("revealed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("contact_reveals_once_uq").on(t.bookingId, t.viewerId)],
+);
 
 /** Custom offers; in Phase 1 the operator enters them on the client's behalf. */
 export const offers = pgTable(

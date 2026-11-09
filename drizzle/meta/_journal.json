@@ -29,6 +29,13 @@
       "when": 1794225592286,
       "tag": "0003_places",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794225746654,
+      "tag": "0004_chat_threads",
+      "breakpoints": true
     }
   ]
 }
