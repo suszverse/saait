@@ -15,6 +15,13 @@
       "when": 1794088089211,
       "tag": "0001_sms_outbox",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794225277522,
+      "tag": "0002_accounts_alias_theme",
+      "breakpoints": true
     }
   ]
 }

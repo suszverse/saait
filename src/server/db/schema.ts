@@ -72,6 +72,7 @@ export const payoutStatusEnum = pgEnum("payout_status", ["scheduled", "held", "p
 export const planEnum = pgEnum("plan", ["free", "pro", "studio"]);
 export const disputeStatusEnum = pgEnum("dispute_status", ["open", "decided"]);
 export const offerStatusEnum = pgEnum("offer_status", ["sent", "accepted", "declined", "expired"]);
+export const themePrefEnum = pgEnum("theme_pref", ["system", "light", "dark"]);
 
 // ---------- people ----------
 export const users = pgTable(
@@ -82,9 +83,22 @@ export const users = pgTable(
     name: text("name"),
     role: roleEnum("role").notNull().default("client"),
     phoneLockedUntil: timestamp("phone_locked_until", { withTimezone: true }),
+    theme: themePrefEnum("theme").notNull().default("system"),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("users_phone_uq").on(t.phone)],
+);
+
+/** One row per user per version of the terms accepted at sign-up or on re-prompt. */
+export const agreementAcceptances = pgTable(
+  "agreement_acceptances",
+  {
+    id: id(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    version: text("version").notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("agreement_acceptances_user_version_uq").on(t.userId, t.version)],
 );
 
 export const otpCodes = pgTable(
@@ -140,6 +154,12 @@ export const providerProfiles = pgTable(
     displayName: text("display_name").notNull(),
     businessName: text("business_name"),
     kind: providerKindEnum("kind").notNull().default("freelancer"),
+    /** Freelancers are anonymous to clients: "Crew A3-417" stands in for the name. Required when kind = freelancer. */
+    alias: text("alias"),
+    crewHeadline: text("crew_headline"),
+    crewRoles: text("crew_roles").array().notNull().default(sql`'{}'::text[]`),
+    /** Crew day rate in NPR paisa, shown to studios hiring crew. */
+    dayRate: money("day_rate"),
     homeCityId: uuid("home_city_id").references(() => cities.id),
     serviceRadiusKm: integer("service_radius_km").notNull().default(25),
     lat: doublePrecision("lat"),
@@ -195,12 +215,15 @@ export const providerProfiles = pgTable(
     uniqueIndex("provider_citizenship_uq").on(t.citizenshipKey),
     uniqueIndex("provider_passport_uq").on(t.passportKey),
     uniqueIndex("provider_pan_uq").on(t.panNumber).where(sql`${t.panNumber} is not null`),
+    uniqueIndex("provider_alias_uq").on(t.alias).where(sql`${t.alias} is not null`),
     index("provider_kyc_idx").on(t.kycStatus),
     // A number that normalises to nothing would dodge the unique index.
     check("citizenship_has_digits", sql`${t.citizenshipNumber} is null or ${t.citizenshipKey} is not null`),
     check("passport_has_characters", sql`${t.passportNumber} is null or ${t.passportKey} is not null`),
     check("pan_nine_digits", sql`${t.panNumber} is null or ${t.panNumber} ~ '^[0-9]{9}$'`),
     check("capacity_positive", sql`${t.dailyCapacity} between 1 and 20`),
+    check("freelancer_has_alias", sql`${t.kind} <> 'freelancer' or ${t.alias} is not null`),
+    check("day_rate_non_negative", sql`${t.dayRate} is null or ${t.dayRate} >= 0`),
   ],
 );
 

@@ -23,9 +23,12 @@ let operator: { id: string; role: string };
 const JPEG = (n = 64) => new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...randomBytes(n)]);
 const ALL = Object.fromEntries(CHECKLIST.map((c) => [c.key, true]));
 
+let aliasSeq = 0;
 async function newProvider(phone: string, slug: string) {
   const [u] = await db.insert(s.users).values({ phone, role: "provider" }).returning();
-  const [p] = await db.insert(s.providerProfiles).values({ userId: u.id, slug, displayName: slug }).returning();
+  // Freelancer profiles need a crew alias since migration 0002.
+  const alias = `Crew T${aliasSeq % 10}-${String(++aliasSeq).padStart(3, "0")}`;
+  const [p] = await db.insert(s.providerProfiles).values({ userId: u.id, slug, displayName: slug, alias }).returning();
   return { userId: u.id, providerId: p.id };
 }
 

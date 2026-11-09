@@ -58,11 +58,12 @@ describe("schema constraints", () => {
       userId: providerUserA,
       slug: "a",
       displayName: "A",
+      alias: "Crew A1-001",
       panNumber: "301245678",
       citizenshipNumber: "27-01-71-00412",
     });
     await rejects(
-      db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", panNumber: "301245678" }),
+      db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", alias: "Crew B1-001", panNumber: "301245678" }),
       /provider_pan_uq|duplicate/,
     );
     await rejects(
@@ -70,6 +71,7 @@ describe("schema constraints", () => {
         userId: providerUserB,
         slug: "b",
         displayName: "B",
+        alias: "Crew B1-001",
         citizenshipNumber: "27-01-71-00412",
       }),
       /provider_citizenship_uq|duplicate/,
@@ -79,7 +81,7 @@ describe("schema constraints", () => {
   it("treats the same citizenship number typed differently as a duplicate", async () => {
     for (const variant of ["27017100412", " 27-01-71-00412", "२७-०१-७१-००४१२"]) {
       await rejects(
-        db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", citizenshipNumber: variant }),
+        db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", alias: "Crew B1-001", citizenshipNumber: variant }),
         /provider_citizenship_uq|duplicate/,
       );
     }
@@ -87,11 +89,11 @@ describe("schema constraints", () => {
 
   it("rejects identity numbers that normalise to nothing", async () => {
     await rejects(
-      db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", citizenshipNumber: "abc" }),
+      db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", alias: "Crew B1-001", citizenshipNumber: "abc" }),
       /citizenship_has_digits|check/,
     );
     await rejects(
-      db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", passportNumber: "---" }),
+      db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", alias: "Crew B1-001", passportNumber: "---" }),
       /passport_has_characters|check/,
     );
   });
@@ -99,13 +101,30 @@ describe("schema constraints", () => {
   it("enforces one profile per passport, ignoring case and spacing", async () => {
     await db.update(s.providerProfiles).set({ passportNumber: "PA 1234567" }).where(sqlEq(s.providerProfiles.slug, "a"));
     await rejects(
-      db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", passportNumber: "pa1234567" }),
+      db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", alias: "Crew B1-001", passportNumber: "pa1234567" }),
       /provider_passport_uq|duplicate/,
     );
   });
 
   it("allows many providers without a PAN yet", async () => {
-    await db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B" });
+    await db.insert(s.providerProfiles).values({ userId: providerUserB, slug: "b", displayName: "B", alias: "Crew B1-001" });
+  });
+
+  it("requires an alias for freelancers and keeps aliases unique", async () => {
+    const [u] = await db.insert(s.users).values({ phone: "+9779800000004", role: "provider" }).returning({ id: s.users.id });
+    await rejects(db.insert(s.providerProfiles).values({ userId: u.id, slug: "c", displayName: "C" }), /freelancer_has_alias|check/);
+    await rejects(
+      db.insert(s.providerProfiles).values({ userId: u.id, slug: "c", displayName: "C", alias: "Crew A1-001" }),
+      /provider_alias_uq|duplicate/,
+    );
+    await db.insert(s.providerProfiles).values({ userId: u.id, slug: "c", displayName: "Studio C", kind: "studio" });
+    await rejects(db.update(s.providerProfiles).set({ dayRate: -1 }).where(sqlEq(s.providerProfiles.slug, "c")), /day_rate_non_negative|check/);
+  });
+
+  it("records each terms version once per user", async () => {
+    await db.insert(s.agreementAcceptances).values({ userId: clientId, version: "2026-11" });
+    await rejects(db.insert(s.agreementAcceptances).values({ userId: clientId, version: "2026-11" }), /agreement_acceptances_user_version_uq|duplicate/);
+    await db.insert(s.agreementAcceptances).values({ userId: clientId, version: "2026-12" });
   });
 
   it("rejects a PAN that is not nine digits", async () => {

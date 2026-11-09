@@ -6,7 +6,7 @@ Every account accepts this on sign-up with one checkbox, after a screen that sho
 
 ## 1. The seven rules everyone agrees to
 
-1. **Messages are checked before delivery.** Software scans every message, image and voice note for phone numbers, payment QR codes, bank or wallet details and links to other apps, before the other person sees it. A message that breaks the rule is shown to you as "Not sent" with the reason, and you can ask for a review. Repeated attempts pause chat and freeze rewards. Only flagged messages are read by Saait staff.
+1. **Messages are checked before delivery.** Software scans every message, image and voice note for phone numbers, payment QR codes, bank or wallet details and links to other apps, before the other person sees it. A message that breaks the rule is shown to you as "Not sent" with the reason, and you can ask for a review. Repeated attempts pause chat and freeze rewards. Only held messages are read by our team.
 2. **Phone numbers are shared 48 hours before the event.** Until then, you talk through Saait chat. The number appears on the booking page only, for that booking, and the reveal is logged.
 3. **The deposit goes through Saait. The balance goes to a verified account.** Pay or get paid only as the booking page shows. A QR code or account number sent in chat is never from Saait and is always blocked. Saait's guarantee (refund or replacement) covers only bookings paid this way.
 4. **Rewards are credit and points, not cash.** They pay Saait fees and plans only, expire after 12 months, cannot be withdrawn, transferred or sold, and are removed for a confirmed off-platform deal, a no-show or fraud. Saait can change earn rates with 30 days' notice; earned balances are honoured.
