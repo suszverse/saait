@@ -7,13 +7,14 @@ import { rupees } from "@/lib/money";
 import * as s from "./db/schema";
 import { seed } from "./db/seed";
 import { getVerifiedProvider, slotsLeft } from "./providers";
-import { compareResults, searchFreeOnDate, searchQuery } from "./search";
+import { compareResults, nearestBusinesses, searchFreeOnDate, searchQuery } from "./search";
 
 const client = postgres(process.env.DATABASE_URL_TEST ?? "", { max: 1, onnotice: () => {} });
 const db = drizzle(client, { schema: s, casing: "snake_case" });
 const FALGUN_12 = fromBs({ year: 2083, month: 11, day: 12 });
 const FALGUN_13 = fromBs({ year: 2083, month: 11, day: 13 });
-const q = (over: Record<string, string> = {}) => searchQuery.parse({ city: "butwal", date: FALGUN_12, category: "wedding-photo", ...over });
+const q = (over: Record<string, string> = {}) => searchQuery.parse({ date: FALGUN_12, category: "wedding-photo", ...over });
+const TANSEN = { lat: "27.8673", lng: "83.5467" };
 
 beforeAll(async () => {
   await client`truncate table users, cities, service_categories, auspicious_dates restart identity cascade`;
@@ -28,6 +29,7 @@ describe("free-on-date search", () => {
     const { results } = await searchFreeOnDate(db, q());
     const slugs = results.map((r) => r.slug);
     expect(slugs).toContain("shrestha-studio");
+    expect(slugs).toContain("prakash-films");
     for (const hidden of ["kiran-rai", "ramesh-thapa-films", "lumbini-wedding-co", "sabina-shrestha"]) expect(slugs).not.toContain(hidden);
   });
 
@@ -74,8 +76,30 @@ describe("free-on-date search", () => {
     expect(offDay.fromPeakSurcharge).toBe(0);
   });
 
-  it("respects reach from the chosen city", async () => {
-    const tansen = (await searchFreeOnDate(db, q({ city: "tansen" }))).results.map((r) => r.slug);
+  it("searches from Traffic Chowk by default and reports each distance", async () => {
+    const { place, results } = await searchFreeOnDate(db, q());
+    expect(place).toEqual({ label: "Traffic Chowk, Butwal", lat: 27.7006, lng: 83.4483, radiusKm: 30 });
+    for (const r of results) {
+      expect(Number.isFinite(r.distanceKm)).toBe(true);
+      expect(r.distanceKm).toBe(Math.round(r.distanceKm * 10) / 10);
+    }
+    expect(results.find((r) => r.slug === "shrestha-studio")!.distanceKm).toBe(0);
+    const prakash = results.find((r) => r.slug === "prakash-films")!;
+    expect(prakash.distanceKm).toBeGreaterThan(20);
+    expect(prakash.distanceKm).toBeLessThan(25);
+  });
+
+  it("includes a provider only inside both the client's radius and its own reach", async () => {
+    const near = (await searchFreeOnDate(db, q({ radiusKm: "5" }))).results.map((r) => r.slug);
+    expect(near).toContain("shrestha-studio");
+    expect(near).not.toContain("prakash-films");
+    expect(near).not.toContain("rupandehi-weddings");
+    expect(near).not.toContain("tansen-frames");
+    // Lumbini is 29 km out: inside a 30 km radius but past the 25 km reach floor.
+    const wide = (await searchFreeOnDate(db, q())).results.map((r) => r.slug);
+    expect(wide).toContain("tansen-frames");
+    expect(wide).not.toContain("lens-of-lumbini");
+    const tansen = (await searchFreeOnDate(db, q({ ...TANSEN, place: "Tansen Bazaar" }))).results.map((r) => r.slug);
     expect(tansen).toContain("tansen-frames");
     expect(tansen).not.toContain("lens-of-lumbini");
   });
@@ -83,7 +107,22 @@ describe("free-on-date search", () => {
   it("rejects a malformed query at the boundary", () => {
     expect(() => searchQuery.parse({ date: "2027-02-30" })).toThrow();
     expect(() => searchQuery.parse({ date: FALGUN_12, band: "cheapest" })).toThrow();
-    expect(() => searchQuery.parse({ date: FALGUN_12, city: "../etc" })).toThrow();
+    expect(() => searchQuery.parse({ date: FALGUN_12, lat: "51.5", lng: "-0.1" })).toThrow();
+    expect(() => searchQuery.parse({ date: FALGUN_12, lat: "27.7", lng: "83.4", radiusKm: "2" })).toThrow();
+    expect(() => searchQuery.parse({ date: FALGUN_12, place: "x".repeat(81) })).toThrow();
+    expect(searchQuery.parse({ date: FALGUN_12 })).toMatchObject({ lat: 27.7006, lng: 83.4483, radiusKm: 30 });
+  });
+});
+
+describe("nearest businesses", () => {
+  it("returns the three closest listed studios sorted by distance", async () => {
+    const near = await nearestBusinesses(db, { lat: 27.8673, lng: 83.5467 });
+    expect(near).toHaveLength(3);
+    expect(near[0].slug).toBe("tansen-frames");
+    expect(near[0].distanceKm).toBe(0);
+    for (let i = 1; i < near.length; i++) expect(near[i - 1].distanceKm).toBeLessThanOrEqual(near[i].distanceKm);
+    for (const b of near) expect(["golden-hour-nepal", "pixel-and-palki", "siddhartha-photo", "kiran-rai"]).not.toContain(b.slug);
+    expect(await nearestBusinesses(db, { lat: 27.484, lng: 83.276 }, 1)).toMatchObject([{ slug: "lens-of-lumbini", distanceKm: 0 }]);
   });
 });
 

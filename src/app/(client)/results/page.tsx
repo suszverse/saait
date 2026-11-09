@@ -18,7 +18,7 @@ function replies(minutes: number | null) {
 export default async function ResultsPage({ searchParams }: PageProps<"/results">) {
   await connection();
   const q = parseClientQuery(await searchParams);
-  const { city, category, saait, results } = await searchFreeOnDate(db(), q);
+  const { place, category, saait, results } = await searchFreeOnDate(db(), q);
   const title = `${category?.shortName ?? "Providers"}, ${bsDayMonth(q.date)}`;
 
   return (
@@ -34,7 +34,7 @@ export default async function ResultsPage({ searchParams }: PageProps<"/results"
               {saait && <SaaitDot />}
               <span>
                 {saait ? "Wedding date · " : ""}
-                {city?.name ?? q.city} and 25 km
+                {place.label} and {place.radiusKm} km
               </span>
             </p>
           </div>

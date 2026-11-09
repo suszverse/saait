@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { CategoryChips } from "@/components/client/category-chips";
-import { CityPicker } from "@/components/client/city-picker";
 import { DateStrip } from "@/components/client/date-strip";
 import { BellIcon, BottomNav, ChevronRightIcon, ClockIcon, ProviderTile } from "@/components/ui";
 import { formatRs, type Paisa } from "@/lib/money";
 import { addDays, bsDayMonth, bsDayMonthNp, type IsoDate } from "@/lib/nepali-date";
 import { db } from "@/server/db";
-import { getCategories, getCities, saaitDaysBetween } from "@/server/providers";
+import { getCategories, saaitDaysBetween } from "@/server/providers";
 import { searchFreeOnDate } from "@/server/search";
 import { parseClientQuery, queryString } from "@/server/client/query";
 
@@ -17,13 +16,11 @@ export const metadata: Metadata = { title: { absolute: "Saait · Lock your date"
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   await connection();
   const q = parseClientQuery(await searchParams);
-  const [cities, categories, saait, found] = await Promise.all([
-    getCities(db()),
+  const [categories, saait, found] = await Promise.all([
     getCategories(db()),
     saaitDaysBetween(db(), addDays(q.date, -7), addDays(q.date, 14)),
     searchFreeOnDate(db(), q),
   ]);
-  const city = cities.find((c) => c.slug === q.city);
   const isSaait = saait.has(q.date as IsoDate);
   const n = found.results.length;
   const dateLine = isSaait
@@ -45,7 +42,10 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
               <BellIcon size={22} />
             </Link>
           </div>
-          <CityPicker cities={cities.map((c) => ({ slug: c.slug, name: c.name }))} current={city?.slug ?? q.city} q={q} />
+          <div className="flex flex-col">
+            <span className="text-meta text-stone">Shooting near</span>
+            <span className="text-title font-extrabold text-ink">{found.place.label}</span>
+          </div>
         </header>
 
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 md:grid-cols-[minmax(0,420px)_minmax(0,1fr)] md:gap-x-16">
@@ -83,7 +83,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
               )}
             </div>
             {n === 0 ? (
-              <p className="rounded-card bg-tint px-4 py-3.5 text-small">No verified provider is free that day in {city?.name ?? "this area"}. Pick another date above.</p>
+              <p className="rounded-card bg-tint px-4 py-3.5 text-small">No verified provider is free that day near {found.place.label}. Pick another date above.</p>
             ) : (
               <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
                 {found.results.slice(0, 8).map((r, i) => (

@@ -58,7 +58,9 @@ export default async function ProviderPage({ params, searchParams }: PageProps<"
       <style>{packages.map((k) => `form:has(input[value="${k.id}"]:checked) [data-lock-price="${k.id}"]{display:inline}`).join("")}</style>
       <form action={`/book/${p.slug}`} method="get" className="flex flex-1 flex-col md:mt-6 md:grid md:grid-cols-[minmax(0,1fr)_400px] md:gap-12">
         <input type="hidden" name="date" value={q.date} />
-        <input type="hidden" name="city" value={q.city} />
+        <input type="hidden" name="lat" value={q.lat} />
+        <input type="hidden" name="lng" value={q.lng} />
+        {q.place && <input type="hidden" name="place" value={q.place} />}
         <input type="hidden" name="category" value={q.category} />
 
         <div className="flex flex-1 flex-col gap-3.5 px-gutter pt-4 md:px-0 md:pt-0">

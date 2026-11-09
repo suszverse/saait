@@ -2,8 +2,12 @@
  * Free-on-date search, system plan section 5 and design principle 1.
  *
  * Who appears: verified businesses on a paid plan offering the category,
- * within reach of the chosen city, with a slot left on the day. Freelancers
+ * within reach of the chosen point, with a slot left on the day. Freelancers
  * are never listed (docs/proposals/leakage-and-rewards.md section 13).
+ *
+ * The point is a lat/lng (a place the client picked, or their location) with
+ * a radius. A provider is in reach when it lies inside the client's radius
+ * and the client lies inside the provider's own service radius.
  *
  * Order: availability (any slot left; all results qualify), then rating, then
  * distance. Never price. Budget bands filter by a provider's from-price for
@@ -28,19 +32,49 @@ export const BUDGET_BANDS = {
 } as const satisfies Record<string, { label: string; min: Paisa | null; max: Paisa | null }>;
 export type BudgetBand = keyof typeof BUDGET_BANDS;
 
+/** Where a search starts when the client has not picked a place yet. */
+export const DEFAULT_PLACE = { label: "Traffic Chowk, Butwal", lat: 27.7006, lng: 83.4483 } as const;
+export const DEFAULT_RADIUS_KM = 30;
+
+/** Nepal's bounding box; the places table enforces the same (places_in_nepal). */
+export const NEPAL_LAT = { min: 26.3, max: 30.5 } as const;
+export const NEPAL_LNG = { min: 80.0, max: 88.3 } as const;
+
 /** zod at the boundary: everything here arrives from the URL. */
 export const searchQuery = z.object({
-  city: z.string().regex(/^[a-z0-9-]{1,40}$/).default("butwal"),
+  lat: z.coerce.number().min(NEPAL_LAT.min).max(NEPAL_LAT.max).default(DEFAULT_PLACE.lat),
+  lng: z.coerce.number().min(NEPAL_LNG.min).max(NEPAL_LNG.max).default(DEFAULT_PLACE.lng),
+  radiusKm: z.coerce.number().min(5).max(100).default(DEFAULT_RADIUS_KM),
+  place: z.string().trim().max(80).optional(),
   date: z.string().refine(isIsoDate, "Not a date"),
   category: z.string().regex(/^[a-z0-9-]{1,40}$/).default("wedding-photo"),
   band: z.enum(Object.keys(BUDGET_BANDS) as [BudgetBand, ...BudgetBand[]]).default("any"),
 });
 export type SearchQuery = z.infer<typeof searchQuery>;
 
-/** Reach from the chosen city: the provider's radius, with a 25 km floor ("Butwal and 25 km"). */
+/** Reach from the chosen point: the provider's radius, with a 25 km floor ("Butwal and 25 km"). */
 export const MIN_REACH_KM = 25;
 
-export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+export type LatLng = { lat: number; lng: number };
+
+/** The point a search ran from, for the results header. */
+export type SearchPlace = LatLng & { label: string; radiusKm: number };
+
+/** Label falls back to the coordinates so the header never reads blank. */
+export function searchPlace(q: Pick<SearchQuery, "lat" | "lng" | "radiusKm" | "place">): SearchPlace {
+  const label = q.place || (q.lat === DEFAULT_PLACE.lat && q.lng === DEFAULT_PLACE.lng ? DEFAULT_PLACE.label : `${q.lat.toFixed(4)}, ${q.lng.toFixed(4)}`);
+  return { label, lat: q.lat, lng: q.lng, radiusKm: q.radiusKm };
+}
+
+const round1 = (km: number) => Math.round(km * 10) / 10;
+
+/** A provider without a map pin is placed at their home city's centre. */
+function providerPin(p: { lat: number | null; lng: number | null }, homeCity: LatLng | null): LatLng | null {
+  if (p.lat != null && p.lng != null) return { lat: p.lat, lng: p.lng };
+  return homeCity ? { lat: homeCity.lat, lng: homeCity.lng } : null;
+}
+
+export function haversineKm(a: LatLng, b: LatLng): number {
   const R = 6371;
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
@@ -67,10 +101,10 @@ export type SearchResult = {
 };
 
 export async function searchFreeOnDate(db: Db, q: SearchQuery, now = new Date()) {
-  const [city] = await db.select().from(s.cities).where(eq(s.cities.slug, q.city));
+  const place = searchPlace(q);
   const [category] = await db.select().from(s.serviceCategories).where(eq(s.serviceCategories.slug, q.category));
   const saait = await isSaait(db, q.date as IsoDate);
-  if (!city || !category) return { city: city ?? null, category: category ?? null, saait, results: [] as SearchResult[] };
+  if (!category) return { place, category: null, saait, results: [] as SearchResult[] };
 
   const rows = await db
     .select({ p: s.providerProfiles, pkg: s.packages, homeCity: s.cities })
@@ -87,12 +121,11 @@ export async function searchFreeOnDate(db: Db, q: SearchQuery, now = new Date())
   }
 
   const reachable = [...byProvider.values()]
-    // A provider without a map pin is placed at their home city's centre.
     .map((e) => {
-      const pin = e.p.lat != null && e.p.lng != null ? { lat: e.p.lat, lng: e.p.lng } : e.homeCity ? { lat: e.homeCity.lat, lng: e.homeCity.lng } : null;
-      return { ...e, distanceKm: pin ? haversineKm(city, pin) : Infinity };
+      const pin = providerPin(e.p, e.homeCity);
+      return { ...e, distanceKm: pin ? haversineKm(place, pin) : Infinity };
     })
-    .filter((e) => e.distanceKm <= Math.max(e.p.serviceRadiusKm, MIN_REACH_KM));
+    .filter((e) => e.distanceKm <= q.radiusKm && e.distanceKm <= Math.max(e.p.serviceRadiusKm, MIN_REACH_KM));
 
   const slots = await slotsLeft(db, reachable.map((e) => e.p.id), q.date as IsoDate, now);
   const band = BUDGET_BANDS[q.band];
@@ -112,7 +145,7 @@ export async function searchFreeOnDate(db: Db, q: SearchQuery, now = new Date())
       slug: e.p.slug,
       name: e.p.displayName,
       cityName: e.homeCity?.name ?? "",
-      distanceKm: Math.round(e.distanceKm * 10) / 10,
+      distanceKm: round1(e.distanceKm),
       rating: e.p.ratingAvg,
       ratingCount: e.p.ratingCount,
       completed: e.p.completedBookings,
@@ -126,7 +159,31 @@ export async function searchFreeOnDate(db: Db, q: SearchQuery, now = new Date())
   }
 
   results.sort(compareResults);
-  return { city, category, saait, results };
+  return { place, category, saait, results };
+}
+
+export type NearbyBusiness = Pick<SearchResult, "id" | "slug" | "name" | "cityName" | "distanceKm" | "rating" | "ratingCount">;
+
+/**
+ * The n client-visible businesses closest to a point, whatever the date or
+ * radius. Shown when a search comes back empty so the client has somewhere
+ * to go next.
+ */
+export async function nearestBusinesses(db: Db, point: LatLng, n = 3): Promise<NearbyBusiness[]> {
+  const rows = await db
+    .select({ p: s.providerProfiles, homeCity: s.cities })
+    .from(s.providerProfiles)
+    .leftJoin(s.cities, eq(s.cities.id, s.providerProfiles.homeCityId))
+    .where(clientVisible());
+  return rows
+    .map(({ p, homeCity }) => {
+      const pin = providerPin(p, homeCity);
+      return { id: p.id, slug: p.slug, name: p.displayName, cityName: homeCity?.name ?? "", distanceKm: pin ? haversineKm(point, pin) : Infinity, rating: p.ratingAvg, ratingCount: p.ratingCount };
+    })
+    .filter((b) => Number.isFinite(b.distanceKm))
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .slice(0, n)
+    .map((b) => ({ ...b, distanceKm: round1(b.distanceKm) }));
 }
 
 /** Availability, then rating (unrated last), then distance. Price never appears here. */
