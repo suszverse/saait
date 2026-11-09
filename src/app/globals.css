@@ -22,8 +22,6 @@
   /* Page background and text on Sindoor/Ink/Teal fills. */
   --color-ground: var(--ground);
   --color-on-accent: var(--on-accent);
-  /* Legacy name: resolves to ground so existing bg-white is theme-aware. */
-  --color-white: var(--ground);
   --color-tint: var(--tint);
   --color-marigold-tint: var(--marigold-tint);
   --color-marigold-line: var(--marigold-line);
@@ -158,7 +156,7 @@
 /* Base styles live in the base layer so utilities always win over them. */
 @layer base {
   html {
-    background: var(--color-white);
+    background: var(--color-ground);
     color: var(--color-ink);
   }
 

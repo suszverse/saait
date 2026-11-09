@@ -24,9 +24,9 @@ export default async function KycQueuePage() {
           </p>
         </div>
         <ul className="flex flex-wrap gap-2 text-meta font-semibold" aria-label="Counts">
-          <li className="inline-flex h-9 items-center rounded-chip bg-ink px-3 text-white">Submitted {q.counts.submitted}</li>
-          <li className="inline-flex h-9 items-center rounded-chip border border-line bg-white px-3">Resubmitted {q.counts.resubmitted}</li>
-          <li className="inline-flex h-9 items-center rounded-chip border border-line bg-white px-3">Re-verification due {q.counts.reverification_due}</li>
+          <li className="inline-flex h-9 items-center rounded-chip bg-ink px-3 text-on-accent">Submitted {q.counts.submitted}</li>
+          <li className="inline-flex h-9 items-center rounded-chip border border-line bg-ground px-3">Resubmitted {q.counts.resubmitted}</li>
+          <li className="inline-flex h-9 items-center rounded-chip border border-line bg-ground px-3">Re-verification due {q.counts.reverification_due}</li>
         </ul>
       </header>
       <div className="max-w-[360px]">

@@ -36,7 +36,7 @@ export function OnboardingForm({ cities, categories }: { cities: { slug: string;
         <label htmlFor="city" className="text-small font-semibold">
           Home city
         </label>
-        <select id="city" name="city" required defaultValue="" className="h-13 rounded-button border border-line bg-white px-3.5 text-body focus:border-ink focus:ring-1 focus:ring-inset focus:ring-ink focus:outline-none">
+        <select id="city" name="city" required defaultValue="" className="h-13 rounded-button border border-line bg-ground px-3.5 text-body focus:border-ink focus:ring-1 focus:ring-inset focus:ring-ink focus:outline-none">
           <option value="" disabled>
             Pick a city
           </option>
@@ -51,7 +51,7 @@ export function OnboardingForm({ cities, categories }: { cities: { slug: string;
         <legend className="mb-2 text-small font-semibold">What you shoot</legend>
         <div className="flex flex-wrap gap-2">
           {categories.map((c) => (
-            <label key={c.slug} className="inline-flex h-10 cursor-pointer items-center rounded-chip border border-line px-3.5 text-small font-semibold has-checked:border-ink has-checked:bg-ink has-checked:text-white has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink">
+            <label key={c.slug} className="inline-flex h-10 cursor-pointer items-center rounded-chip border border-line px-3.5 text-small font-semibold has-checked:border-ink has-checked:bg-ink has-checked:text-on-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink">
               <input type="checkbox" name="categories" value={c.slug} className="sr-only" />
               {c.shortName}
             </label>

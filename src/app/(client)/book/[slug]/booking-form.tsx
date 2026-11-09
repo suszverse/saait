@@ -86,7 +86,7 @@ export function BookingForm(props: {
               return (
                 <label
                   key={a.id}
-                  className={`flex h-12 cursor-pointer items-center justify-between gap-2.5 rounded-button border px-3.5 text-label ${on ? "border-ink bg-tint" : "border-line bg-white"}`}
+                  className={`flex h-12 cursor-pointer items-center justify-between gap-2.5 rounded-button border px-3.5 text-label ${on ? "border-ink bg-tint" : "border-line bg-ground"}`}
                 >
                   <span className="flex items-center gap-2.5">
                     <input
@@ -99,7 +99,7 @@ export function BookingForm(props: {
                     />
                     <span
                       aria-hidden="true"
-                      className={`flex size-5 items-center justify-center rounded-[6px] border-2 text-white peer-focus-visible:outline-2 peer-focus-visible:outline-ink ${on ? "border-ink bg-ink" : "border-check-border bg-white"}`}
+                      className={`flex size-5 items-center justify-center rounded-[6px] border-2 text-on-accent peer-focus-visible:outline-2 peer-focus-visible:outline-ink ${on ? "border-ink bg-ink" : "border-check-border bg-ground"}`}
                     >
                       {on && <CheckIcon size={12} strokeWidth={3.5} />}
                     </span>
@@ -157,7 +157,7 @@ export function BookingForm(props: {
         <p className="text-meta text-stone">{props.refundLine}</p>
       </div>
 
-      <div className="sticky bottom-0 mt-auto flex flex-col gap-2.5 border-t border-line bg-white pt-3 pb-7 md:static md:mt-6 md:border-0">
+      <div className="sticky bottom-0 mt-auto flex flex-col gap-2.5 border-t border-line bg-ground pt-3 pb-7 md:static md:mt-6 md:border-0">
         {state.error && !state.field && (
           <p role="alert" className="text-meta text-sindoor">
             {state.error}
@@ -168,7 +168,7 @@ export function BookingForm(props: {
           {METHODS.map((m) => (
             <label
               key={m.id}
-              className={`flex h-11 cursor-pointer items-center justify-center rounded-control border text-small font-semibold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink ${method === m.id ? "border-ink bg-tint" : "border-line bg-white"}`}
+              className={`flex h-11 cursor-pointer items-center justify-center rounded-control border text-small font-semibold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink ${method === m.id ? "border-ink bg-tint" : "border-line bg-ground"}`}
             >
               <input type="radio" name="method" value={m.id} checked={method === m.id} onChange={() => setMethod(m.id)} className="sr-only" />
               {m.label}

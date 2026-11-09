@@ -33,7 +33,7 @@ export function UploadTile({ kind, label, hint, uploaded, locked, camera = "envi
       <span className="text-small font-semibold">{label}</span>
       {done ? (
         <div className="relative aspect-[3/2] overflow-hidden rounded-button bg-tint">
-          <span className="absolute bottom-2 left-2 flex h-6 items-center gap-1 rounded-chip bg-white px-2 text-nano font-bold text-teal">
+          <span className="absolute bottom-2 left-2 flex h-6 items-center gap-1 rounded-chip bg-ground px-2 text-nano font-bold text-teal">
             <CheckIcon size={10} strokeWidth={3} />
             Uploaded
           </span>
@@ -41,7 +41,7 @@ export function UploadTile({ kind, label, hint, uploaded, locked, camera = "envi
       ) : (
         <label
           htmlFor={id}
-          className={`flex aspect-[3/2] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-button border-2 border-dashed border-check-border bg-white text-small font-semibold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink ${locked ? "pointer-events-none opacity-50" : ""}`}
+          className={`flex aspect-[3/2] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-button border-2 border-dashed border-check-border bg-ground text-small font-semibold has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ink ${locked ? "pointer-events-none opacity-50" : ""}`}
         >
           <CameraIcon size={24} />
           {pending ? "Uploading" : "Take photo"}
@@ -58,7 +58,7 @@ export function UploadTile({ kind, label, hint, uploaded, locked, camera = "envi
         </label>
       )}
       {done && !locked && (
-        <label htmlFor={id} className="flex h-10 cursor-pointer items-center justify-center rounded-control border border-line bg-white text-small font-semibold">
+        <label htmlFor={id} className="flex h-10 cursor-pointer items-center justify-center rounded-control border border-line bg-ground text-small font-semibold">
           {pending ? "Uploading" : "Retake"}
           <input id={id} name="file" type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" capture={camera} className="sr-only" onChange={pick} />
         </label>

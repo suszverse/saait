@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   ];
   return (
     <div className="flex min-h-dvh flex-col bg-tint md:flex-row">
-      <nav aria-label="Admin" className="flex flex-col gap-1 border-b border-line bg-white px-4 py-5 md:w-60 md:shrink-0 md:border-r md:border-b-0 md:py-7">
+      <nav aria-label="Admin" className="flex flex-col gap-1 border-b border-line bg-ground px-4 py-5 md:w-60 md:shrink-0 md:border-r md:border-b-0 md:py-7">
         <div className="flex flex-col gap-0.5 px-3 pb-5">
           <span className="text-brand font-extrabold">Saait</span>
           <span className="text-meta text-stone">Operator · {user.name ?? user.phone.replace("+977", "")}</span>
@@ -34,7 +34,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           live ? (
             <Link key={label} href={href} aria-current="page" className="flex h-11 items-center justify-between rounded-control bg-tint px-3 text-label font-bold no-underline">
               <span>{label}</span>
-              {count ? <span className="inline-flex h-5.5 items-center rounded-chip bg-ink px-2 text-micro font-normal text-white">{count}</span> : null}
+              {count ? <span className="inline-flex h-5.5 items-center rounded-chip bg-ink px-2 text-micro font-normal text-on-accent">{count}</span> : null}
             </Link>
           ) : (
             <span key={label} className="hidden h-11 items-center justify-between px-3 text-label font-semibold text-stone md:flex" title="Coming in a later phase">

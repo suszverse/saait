@@ -9,9 +9,9 @@ function age(d: Date) {
 }
 
 export function Queue({ q, selected }: { q: Q; selected?: string }) {
-  if (q.items.length === 0) return <p className="rounded-card border border-line bg-white px-4 py-3.5 text-small">Nothing waiting. New submissions appear here.</p>;
+  if (q.items.length === 0) return <p className="rounded-card border border-line bg-ground px-4 py-3.5 text-small">Nothing waiting. New submissions appear here.</p>;
   return (
-    <ul className="overflow-hidden rounded-card border border-line bg-white">
+    <ul className="overflow-hidden rounded-card border border-line bg-ground">
       {q.items.map((i) => {
         const tag = i.reverify ? ["Re-verify", "bg-marigold-tint text-marigold-text"] : i.resubmitted ? ["Resubmitted", "bg-sindoor-tint text-sindoor"] : i.kind === "studio" ? ["Studio", "bg-tint text-stone"] : ["Submitted", "bg-tint text-stone"];
         return (
@@ -19,7 +19,7 @@ export function Queue({ q, selected }: { q: Q; selected?: string }) {
             <Link
               href={`/admin/kyc/${i.id}`}
               aria-current={i.id === selected ? "true" : undefined}
-              className={`flex flex-col gap-1 px-4 py-3.5 no-underline ${i.id === selected ? "bg-tint" : "bg-white hover:bg-tint"}`}
+              className={`flex flex-col gap-1 px-4 py-3.5 no-underline ${i.id === selected ? "bg-tint" : "bg-ground hover:bg-tint"}`}
             >
               <span className="flex items-center justify-between gap-2">
                 <span className="truncate text-label font-bold">{i.name}</span>

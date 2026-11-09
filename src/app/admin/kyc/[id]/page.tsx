@@ -63,7 +63,7 @@ export default async function ReviewPage({ params }: PageProps<"/admin/kyc/[id]"
         <div className="lg:w-[360px] lg:shrink-0">
           <Queue q={q} selected={p.id} />
         </div>
-        <section className="flex min-w-0 flex-1 flex-col gap-5 rounded-card border border-line bg-white p-6" aria-labelledby="who">
+        <section className="flex min-w-0 flex-1 flex-col gap-5 rounded-card border border-line bg-ground p-6" aria-labelledby="who">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex flex-col gap-0.5">
               <h2 id="who" className="text-screen font-extrabold">

@@ -46,11 +46,11 @@ export default async function ProviderPage({ params, searchParams }: PageProps<"
             <span key={i} className="block" style={{ background: t }} />
           ))}
         </div>
-        <Link href={`/results?${queryString(q)}`} aria-label="Back" className="absolute top-13 left-3 flex size-11 items-center justify-center rounded-chip bg-white md:top-3">
+        <Link href={`/results?${queryString(q)}`} aria-label="Back" className="absolute top-13 left-3 flex size-11 items-center justify-center rounded-chip bg-ground md:top-3">
           <ChevronLeftIcon size={22} />
         </Link>
         {p.photoCount > 0 && (
-          <span className="absolute top-13 right-3 flex h-9 items-center rounded-chip bg-white px-3 text-meta font-semibold md:top-3">{p.photoCount} photos</span>
+          <span className="absolute top-13 right-3 flex h-9 items-center rounded-chip bg-ground px-3 text-meta font-semibold md:top-3">{p.photoCount} photos</span>
         )}
       </div>
 
@@ -113,7 +113,7 @@ export default async function ProviderPage({ params, searchParams }: PageProps<"
           {saait && <p className="text-meta text-marigold-text">{day} is a wedding date. Surcharges above are added at the price you see.</p>}
         </div>
 
-        <div className="sticky bottom-0 mt-5 grid grid-cols-[120px_minmax(0,1fr)] items-center gap-2.5 border-t border-line bg-white px-gutter pt-3 pb-7 md:static md:mt-0 md:flex md:h-fit md:flex-col md:items-stretch md:rounded-card md:border md:p-5">
+        <div className="sticky bottom-0 mt-5 grid grid-cols-[120px_minmax(0,1fr)] items-center gap-2.5 border-t border-line bg-ground px-gutter pt-3 pb-7 md:static md:mt-0 md:flex md:h-fit md:flex-col md:items-stretch md:rounded-card md:border md:p-5">
           <a href={whatsappHref(p.displayName, day)} className={buttonClass("secondary", "lg", "no-underline")} target="_blank" rel="noopener noreferrer">
             Message
           </a>
