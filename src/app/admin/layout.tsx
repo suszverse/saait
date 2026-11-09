@@ -1,27 +1,33 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { connection } from "next/server";
 import { signOut } from "@/app/login/actions";
 import { requireRole } from "@/server/auth/guards";
+import { heldCount } from "@/server/chat/moderation";
 import { db } from "@/server/db";
 import { queue } from "@/server/kyc";
+import { reportCounts } from "@/server/signals";
+import { AdminNav, type AdminNavItem } from "./admin-nav";
 
 export const metadata: Metadata = { title: { default: "Operator desk", template: "%s · Saait desk" } };
 
-/** Operator desk (Figma screen 8). Phase 1 ships Verification; the rest are placeholders for later phases. */
+/** Operator desk (Figma screen 8). Live: Verification, Flagged messages, Signals; the rest are placeholders for later phases. */
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   await connection();
   const user = await requireRole(["operator", "admin"], "/admin/kyc");
-  const q = await queue(db());
-  const items: [string, string, number | null, boolean][] = [
-    ["Verification", "/admin/kyc", q.total, true],
-    ["Urgent requests", "", null, false],
-    ["Bookings", "", null, false],
-    ["Disputes", "", null, false],
-    ["Payouts and TDS", "", null, false],
-    ["Providers", "", null, false],
-    ["Wedding dates", "", null, false],
-    ["Settings", "", null, false],
+  const database = db();
+  const [q, held, reports] = await Promise.all([queue(database), heldCount(database), reportCounts(database)]);
+  const openReports = reports.reduce((sum, r) => sum + r.open, 0);
+  const items: AdminNavItem[] = [
+    { label: "Verification", href: "/admin/kyc", count: q.total },
+    { label: "Flagged messages", href: "/admin/chat", count: held },
+    { label: "Signals", href: "/admin/signals", count: openReports },
+    { label: "Urgent requests", href: "" },
+    { label: "Bookings", href: "" },
+    { label: "Disputes", href: "" },
+    { label: "Payouts and TDS", href: "" },
+    { label: "Providers", href: "" },
+    { label: "Wedding dates", href: "" },
+    { label: "Settings", href: "" },
   ];
   return (
     <div className="flex min-h-dvh flex-col bg-tint md:flex-row">
@@ -30,19 +36,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           <span className="text-brand font-extrabold">Saait</span>
           <span className="text-meta text-stone">Operator · {user.name ?? user.phone.replace("+977", "")}</span>
         </div>
-        {items.map(([label, href, count, live]) =>
-          live ? (
-            <Link key={label} href={href} aria-current="page" className="flex h-11 items-center justify-between rounded-control bg-tint px-3 text-label font-bold no-underline">
-              <span>{label}</span>
-              {count ? <span className="inline-flex h-5.5 items-center rounded-chip bg-ink px-2 text-micro font-normal text-on-accent">{count}</span> : null}
-            </Link>
-          ) : (
-            <span key={label} className="hidden h-11 items-center justify-between px-3 text-label font-semibold text-stone md:flex" title="Coming in a later phase">
-              {label}
-              <span className="text-micro font-normal">Later</span>
-            </span>
-          ),
-        )}
+        <AdminNav items={items} />
         <form action={signOut} className="px-3 pt-3 md:mt-auto md:pt-6">
           <button type="submit" className="text-small font-semibold text-stone underline">
             Sign out
