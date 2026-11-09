@@ -1,6 +1,6 @@
 # Proposal: keeping bookings on Saait (two tiers, rewards, leakage signals)
 
-Status: proposal, not approved. Nothing here is built. Written 2026-11-09 from the founder's idea of anonymous freelancers, business subscriptions and a reward system.
+Status: proposal. Founder asked on 2026-11-09 for rewards on both sides and a chat that blocks contact details and payment QR codes; screens are redesigned in Figma (page "Redesign v2 · web"). Nothing here is built in code yet.
 
 ## The starting assumption
 
@@ -30,6 +30,8 @@ Charge the people who stay for being visible, not for each job, and pay them bac
 - **Withholding needs an accountant's answer.** Ask whether a provider who supplies a VAT invoice or tax clearance can be withheld at 1.5% instead of 15%, and whether we can show the TDS certificate as "money you get back at tax time" in the app. This is a framing and compliance question, not a design one, and it is the biggest provider-side leak.
 
 ## 2. Make staying worth more than leaving (the reward system)
+
+This section sets the principle. Exact amounts and levels are in section 7, which wins where the two differ.
 
 Rewards are credits, not cash. They can only be spent on Saait fees and plans, cannot be withdrawn, and cannot be transferred. Holding cash-like balances for users risks being treated as e-money by Nepal Rastra Bank, which would need a licence. Credits that only reduce our own fees avoid that. Confirm with the lawyer before launch.
 
@@ -67,7 +69,7 @@ Rewards are paid from booking-fee revenue. Cap the total at a fixed share of the
 
 Hard bans for leaking are hard to prove and push people away. Use quiet consequences that cost the leaker rewards and ranking.
 
-- **Hide contact details until the deposit is paid.** Chat masks phone numbers, emails and social handles until a booking is locked. It is easy to get around, but it stops the lazy first swap, which is where the 18% comes from.
+- **Block contact details and payment QR codes in chat.** Section 6 has the full rules. It is never airtight, but it stops the easy swap, and every attempt is recorded.
 - **Watch for signals.** Each one raises a flag for the operator, never an automatic penalty:
   - a provider blocks a date in their calendar shortly after an enquiry for that date that never booked;
   - a business repeatedly views or shortlists a freelancer and then hires no one;
@@ -101,10 +103,105 @@ The plan already tracks enquiries that book elsewhere (target under 50%). Add:
 
 Run the concierge test from the validation report first: on half the early jobs take the deposit through Saait, on the other half just introduce the parties, and count how many of the second half come back.
 
+## 6. Secure chat
+
+Chat exists so clients can ask questions and businesses can brief crew without leaving Saait. Every message is checked on the server **before it is delivered**. A message that breaks a rule is never shown to the other person.
+
+### What is blocked
+
+| Kind | Examples the checker catches |
+|---|---|
+| Phone numbers | 98XXXXXXXX, +977 98..., numbers split by spaces, dots or dashes, Devanagari digits (९८...), numbers written out in English or romanised Nepali ("nine eight", "nau aath") |
+| Payment details | Any image containing a QR code or barcode, eSewa or Khalti IDs (they are phone numbers), bank account numbers, "send to my esewa" |
+| Other channels | Email addresses, links, @handles, and the words WhatsApp, Viber, IMO, Telegram, Signal, Instagram, Facebook, TikTok, "wa.me", "DM me" |
+| Images before a booking | No image uploads in chat until a deposit is paid. Portfolio images live on the profile. After the booking, images are allowed but scanned for QR codes and for numbers in the picture |
+
+### What the sender sees
+
+The message stays in their own thread, greyed, marked **"Not sent"**, with one plain reason: "Phone numbers and payment QR codes can't be shared on Saait. Your deposit is protected only when you pay here." Next to it is **"This isn't contact info"**, which sends the message to the operator for a second look. That protects real messages such as "500 photos, 10 hours, Falgun 12".
+
+### Strikes
+
+| Within 30 days | What happens |
+|---|---|
+| 1st blocked message | The "Not sent" notice only |
+| 2nd | Notice plus a flag on the operator's moderation queue |
+| 3rd | Chat paused for 24 hours, reward points frozen, operator reviews the account |
+| Confirmed deliberate leak | Reward level reset and lower placement for a season; repeated leaks remove the account from urgent jobs and the backup pool |
+
+A message the operator clears as a false positive removes the strike and is delivered.
+
+### Contact after the booking
+
+People do need to call each other on the wedding day. So:
+
+- Phone numbers are revealed **48 hours before the event**, inside the booking page, for that booking only. The reveal is logged.
+- The **balance** is still paid directly, as the plan says, but never by a QR code sent in chat. The booking page shows the provider's verified payout QR, taken from the account checked during KYC. A QR sent in chat stays blocked at every stage, so a scammer cannot send a fake one.
+- Clients mark the balance paid in the app, and that completes the booking and releases rewards on both sides.
+
+### Honest limits
+
+No filter catches everything. Someone can write "my number is in my Facebook bio". The checker is there to stop the easy swaps and to leave a record. Rewards and ranking are what make staying worth it. Messages are stored and checked by software; operators read only flagged messages. The terms of use must say so.
+
+## 7. Rewards for both sides
+
+Two currencies, both non-cash and both stored as integers in an append-only ledger:
+
+- **Clients earn Saait credit**, in rupees, spent only on booking fees. It expires after 12 months.
+- **Businesses and freelancers earn points**, which raise their level and can be spent on plan months and featured slots.
+
+### Clients
+
+| They do | They get |
+|---|---|
+| Complete a booking and confirm the balance was paid | Credit worth 25% of the booking fee they paid (Rs 400 on a Rs 1,600 fee) |
+| Leave a review | Rs 100 credit |
+| A friend they invited completes a booking | Rs 300 for each of them |
+| Report a provider who asked to be paid outside Saait, and the operator confirms it | Rs 200 credit |
+
+Credit is applied automatically at checkout, and the checkout shows it as its own line.
+
+### Businesses and freelancers
+
+| They do | Points |
+|---|---|
+| Complete a booking or crew job through Saait | +100 |
+| Deliver on time | +30 |
+| Get a 5-star review | +20 |
+| Accept and complete an urgent job | +50 |
+| 90 days with no chat strikes | +50 |
+| No-show | −200 |
+| Confirmed off-platform deal | Level reset to New |
+
+| Level | Points | What it unlocks |
+|---|---|---|
+| New | 0 | Listed, chat, bookings |
+| Trusted | 300 | "Trusted" badge, first look at urgent jobs in their tier |
+| Proven | 1,000 | Higher placement on wedding dates, backup pool (freelancers), 10% off the plan (businesses) |
+| Top | 2,500 | Featured slot each month, freelancers can open a public business profile at half price |
+
+Points can be spent: 1,500 points buy one month of the Business plan, and 3,000 buy a featured wedding-date slot. Spending points does not lower the level, which counts lifetime points minus penalties.
+
+### Budget
+
+Client credit is capped at 25% of booking-fee revenue for the month. Points cost the plan revenue they replace. Review both monthly.
+
+## 8. Screens (redesigned in Figma)
+
+Figma page "Redesign v2 · web", desktop at 1440 wide. The phone versions follow when the app is built.
+
+| Who | Screens |
+|---|---|
+| Everyone | Join: choose business or freelancer |
+| Client | Home, Results (businesses only), Business profile, Chat with a blocked message, Lock the date with credit applied, Booking after lock (verified balance QR, contact reveal), Rewards and credit |
+| Business | Today (level, inbox, bookings), Find crew (anonymous freelancers), Rewards and plan |
+| Freelancer | Today (alias, job offers, level ladder), Chat with a business where a payment QR is blocked |
+| Operator | Moderation queue for flagged messages, Leakage signals |
+
 ## Decisions needed from the founder
 
 1. Can clients ever reach a freelancer directly, for example only through the urgent flow or as a backup, or is the freelancer side business-only?
-2. Does crew money go through Saait? If it does, withholding applies to it, and that brings back the provider-side leak.
+2. Does crew money go through Saait? If it does, withholding applies to it, and that brings back the provider-side leak. The screens assume it does not: businesses pay crew directly, and Saait records the job.
 3. Do Free and Pro become "Freelancer" and "Business", replacing the current three plans?
 4. What share of fee revenue may rewards cost? 20% is a starting suggestion.
 

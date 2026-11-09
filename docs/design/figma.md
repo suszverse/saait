@@ -29,6 +29,25 @@ The nine artboards are built from component instances and keep the canvas.json o
 
 Photos are grey rectangles in the source tones.
 
+## Page "Redesign v2 · web"
+
+The redesign for business and freelancer tiers, secure chat and rewards, at 1440 wide. The rules behind it are in `docs/proposals/leakage-and-rewards.md`. Nothing on this page is built in code yet.
+
+| Row | Frames |
+|---|---|
+| Everyone and clients | J1 Join, C1 Home, C2 Free on this date, C3 Business profile, C4 Chat with a blocked message, C5 Lock the date with credit, C6 Booking after lock, C7 Saait credit |
+| Businesses | B1 Today, B2 Find crew, B3 Rewards and plan |
+| Freelancers | F1 Today and job offers, F2 Chat with a blocked payment QR |
+| Operator desk | O1 Flagged messages, O2 Leakage signals |
+
+New components on the Design system page: Chat bubble (Incoming, Outgoing, Blocked, System), Level badge (New, Trusted, Proven, Top), Stat tile, Alias avatar, Web header (Client, Business, Freelancer), Operator sidebar, Business card, Crew card, Thread row, Flag row, and ten icons (Message, Gift, Star, Flag, Eye off, QR, Send, Users, Blocked, Phone).
+
+Choices made while designing, to confirm in review:
+
+- Sindoor stays at one use per screen. On chat screens the "Not sent" label is the one use, so send and lock buttons there are Ink or outlined. On the operator review screen the confirm button is the one use, so "Not sent" is Ink there.
+- Rewards and credit use Teal, not Marigold, because Marigold belongs to the urgent flow.
+- Crew are paid by the business directly, to the payout account Saait verified. This is the assumption in the proposal's open decision 2.
+
 ## Page "Web screens"
 
 Desktop layouts of the website at 1440 wide. They were captured from the running site on localhost with the seeded data, so they show what is built, not a mockup. Each capture is raw frames with no component instances; use them as the reference when redesigning the desktop layout.
