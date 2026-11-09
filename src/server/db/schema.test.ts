@@ -278,6 +278,40 @@ describe("schema constraints", () => {
     await rejects(db.update(s.bookings).set({ creditApplied: b.bookingFee + 1 }).where(sqlEq(s.bookings.id, b.id)), /booking_credit_within_fee|check/);
     await rejects(db.update(s.bookings).set({ creditApplied: -1 }).where(sqlEq(s.bookings.id, b.id)), /booking_credit_within_fee|check/);
   });
+
+  it("keeps a crew job between two different providers with one live offer per freelancer and day", async () => {
+    const [studio] = await db.select().from(s.providerProfiles).where(sqlEq(s.providerProfiles.slug, "c"));
+    const [crew] = await db.select().from(s.providerProfiles).where(sqlEq(s.providerProfiles.slug, "a"));
+    const job = { businessId: studio.id, freelancerId: crew.id, day: "2027-03-01", role: "second_shooter", dayRate: 800_000 };
+    await rejects(db.insert(s.crewJobs).values({ ...job, freelancerId: studio.id }), /crew_job_two_parties|check/);
+    await rejects(db.insert(s.crewJobs).values({ ...job, dayRate: -1 }), /crew_job_money|check/);
+    const [first] = await db.insert(s.crewJobs).values(job).returning();
+    expect(first.status).toBe("offered");
+    expect(first.currency).toBe("NPR");
+    await rejects(db.insert(s.crewJobs).values(job), /crew_jobs_freelancer_day_live_uq|duplicate/);
+    await db.update(s.crewJobs).set({ status: "declined" }).where(sqlEq(s.crewJobs.id, first.id));
+    await db.insert(s.crewJobs).values(job);
+  });
+
+  it("puts a review on exactly one of a booking or a crew job", async () => {
+    const [b] = await db.select().from(s.bookings).limit(1);
+    const [job] = await db.select().from(s.crewJobs).limit(1);
+    const base = { authorId: clientId, subjectId: providerUserA, rating: 5 };
+    await rejects(db.insert(s.reviews).values({ ...base, bookingId: b.id, crewJobId: job.id }), /review_has_subject|check/);
+    await rejects(db.insert(s.reviews).values(base), /review_has_subject|check/);
+    const [r] = await db.insert(s.reviews).values({ ...base, crewJobId: job.id }).returning();
+    expect(r.bookingId).toBeNull();
+    expect(r.replyAt).toBeNull();
+  });
+
+  it("requires a portfolio item to carry a url or a storage key", async () => {
+    const [p] = await db.select().from(s.providerProfiles).limit(1);
+    await rejects(db.insert(s.portfolioItems).values({ providerId: p.id, kind: "image" }), /portfolio_has_media|check/);
+    const [item] = await db.insert(s.portfolioItems).values({ providerId: p.id, kind: "image", storageKey: "portfolio/a/1.jpg" }).returning();
+    expect(item.mediaKind).toBe("photo");
+    expect(item.status).toBe("pending");
+    expect(item.url).toBeNull();
+  });
 });
 
 import { eq as sqlEq } from "drizzle-orm";

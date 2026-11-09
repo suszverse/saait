@@ -43,6 +43,13 @@
       "when": 1794226066334,
       "tag": "0005_reward_ledger",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794226299139,
+      "tag": "0006_crew_jobs_portfolio",
+      "breakpoints": true
     }
   ]
 }

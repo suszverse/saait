@@ -95,6 +95,11 @@ export const rewardReasonEnum = pgEnum("reward_reason", [
   "expiry",
   "reset",
 ]);
+/** A business offers a freelancer a day; no_show is set after the day passes without the crew turning up. */
+export const crewJobStatusEnum = pgEnum("crew_job_status", ["offered", "accepted", "declined", "completed", "no_show"]);
+export const mediaKindEnum = pgEnum("media_kind", ["photo", "clip"]);
+/** Uploads wait for screening; held items stay private to the provider with a reason. */
+export const mediaStatusEnum = pgEnum("media_status", ["pending", "approved", "held"]);
 
 // ---------- people ----------
 export const users = pgTable(
@@ -291,15 +296,27 @@ export const providerCategories = pgTable(
   (t) => [primaryKey({ columns: [t.providerId, t.categoryId] })],
 );
 
-export const portfolioItems = pgTable("portfolio_items", {
-  id: id(),
-  providerId: uuid("provider_id").notNull().references(() => providerProfiles.id, { onDelete: "cascade" }),
-  kind: text("kind").notNull(), // image | reel | youtube
-  url: text("url").notNull(),
-  caption: text("caption"),
-  position: smallint("position").notNull().default(0),
-  createdAt: createdAt(),
-});
+/** Linked media (Phase 1) carries a url; uploaded media carries a storage key. Never neither. */
+export const portfolioItems = pgTable(
+  "portfolio_items",
+  {
+    id: id(),
+    providerId: uuid("provider_id").notNull().references(() => providerProfiles.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(), // image | reel | youtube
+    mediaKind: mediaKindEnum("media_kind").notNull().default("photo"),
+    url: text("url"),
+    storageKey: text("storage_key"),
+    status: mediaStatusEnum("status").notNull().default("pending"),
+    /** Why screening held it, shown to the provider. */
+    reason: text("reason"),
+    durationSeconds: integer("duration_seconds"),
+    bytes: bigint("bytes", { mode: "number" }),
+    caption: text("caption"),
+    position: smallint("position").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [check("portfolio_has_media", sql`${t.url} is not null or ${t.storageKey} is not null`)],
+);
 
 /** Section 4: channels, quiet hours and alert scope. Urgent opt-in is Phase 2. */
 export const notificationPreferences = pgTable("notification_preferences", {
@@ -646,22 +663,56 @@ export const withholdingRecords = pgTable(
   (t) => [check("withholding_money", sql`${t.amount} >= 0 and ${t.rateBp} between 0 and 10000 and ${t.currency} = 'NPR'`)],
 );
 
+// ---------- crew ----------
+/**
+ * A business hires a freelancer for one day at a day rate, optionally for a
+ * specific booking. A freelancer holds at most one live (offered or accepted)
+ * job per day; declined and finished jobs free the day again.
+ */
+export const crewJobs = pgTable(
+  "crew_jobs",
+  {
+    id: id(),
+    businessId: uuid("business_id").notNull().references(() => providerProfiles.id),
+    freelancerId: uuid("freelancer_id").notNull().references(() => providerProfiles.id),
+    bookingId: uuid("booking_id").references(() => bookings.id),
+    day: date("day").notNull(),
+    role: text("role").notNull(), // second_shooter | videographer | drone | editor ...
+    dayRate: money("day_rate").notNull(),
+    currency: currency(),
+    status: crewJobStatusEnum("status").notNull().default("offered"),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("crew_jobs_freelancer_day_live_uq").on(t.freelancerId, t.day).where(sql`${t.status} in ('offered', 'accepted')`),
+    index("crew_jobs_business_day_idx").on(t.businessId, t.day),
+    check("crew_job_money", sql`${t.dayRate} >= 0 and ${t.currency} = 'NPR'`),
+    check("crew_job_two_parties", sql`${t.businessId} <> ${t.freelancerId}`),
+  ],
+);
+
+/** A review sits on a booking (client and business rate each other) or on a crew job (business and crew), never both. */
 export const reviews = pgTable(
   "reviews",
   {
     id: id(),
-    bookingId: uuid("booking_id").notNull().references(() => bookings.id),
+    bookingId: uuid("booking_id").references(() => bookings.id),
+    crewJobId: uuid("crew_job_id").references(() => crewJobs.id),
     authorId: uuid("author_id").notNull().references(() => users.id),
     subjectId: uuid("subject_id").notNull().references(() => users.id),
     rating: smallint("rating").notNull(),
     body: text("body"),
     photos: text("photos").array().notNull().default(sql`'{}'::text[]`),
     reply: text("reply"),
+    replyAt: timestamp("reply_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
     uniqueIndex("reviews_one_per_side_uq").on(t.bookingId, t.authorId),
     check("rating_range", sql`${t.rating} between 1 and 5`),
+    check("review_has_subject", sql`num_nonnulls(${t.bookingId}, ${t.crewJobId}) = 1`),
   ],
 );
 
@@ -747,8 +798,7 @@ export const rewardLedger = pgTable(
     reason: rewardReasonEnum("reason").notNull(),
     bookingId: uuid("booking_id").references(() => bookings.id),
     reviewId: uuid("review_id").references(() => reviews.id),
-    /** No foreign key yet; crew_jobs arrives in a later migration. */
-    crewJobId: uuid("crew_job_id"),
+    crewJobId: uuid("crew_job_id").references(() => crewJobs.id),
     reportId: uuid("report_id").references(() => reports.id),
     referralId: uuid("referral_id").references(() => referrals.id),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
