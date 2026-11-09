@@ -50,7 +50,16 @@ export type Quote = {
   addons: Paisa;
   agreedTotal: Paisa;
   deposit: Paisa;
+  /** The full fee before any reward credit; the number the fee rules produce. */
   bookingFee: Paisa;
+  /** Reward credit spent on this booking: min(creditAvailable, bookingFee). */
+  creditApplied: Paisa;
+  /**
+   * The fee the client actually pays: bookingFee - creditApplied. This is
+   * the VAT-inclusive amount that goes on the invoice, so split VAT with
+   * `vatInsideFee(feePayable)`, never from `bookingFee`.
+   */
+  feePayable: Paisa;
   urgentSurcharge: Paisa;
   payNow: Paisa;
   balance: Paisa;
@@ -62,13 +71,19 @@ export function quote(input: {
   addons?: Paisa[];
   depositPercent?: number;
   urgent?: boolean;
+  /** Reward credit the client holds. Only ever offsets the booking fee. */
+  creditAvailable?: Paisa;
 }): Quote {
   assertNonNegative(input.packagePrice, "Package price");
   const peakSurcharge = assertNonNegative(input.peakSurcharge ?? paisa(0), "Peak surcharge");
   const addons = add(paisa(0), ...(input.addons ?? []).map((a) => assertNonNegative(a, "Add-on")));
+  const creditAvailable = assertNonNegative(input.creditAvailable ?? paisa(0), "Credit");
   const agreedTotal = add(input.packagePrice, peakSurcharge, addons);
   const deposit = depositFor(agreedTotal, input.depositPercent);
   const bookingFee = bookingFeeFor(agreedTotal);
+  // Credit never touches the deposit or the balance: those are the provider's money.
+  const creditApplied = paisa(Math.min(creditAvailable, bookingFee));
+  const feePayable = sub(bookingFee, creditApplied);
   const urgentSurcharge = input.urgent ? URGENT_SURCHARGE : paisa(0);
   return {
     packagePrice: input.packagePrice,
@@ -77,10 +92,26 @@ export function quote(input: {
     agreedTotal,
     deposit,
     bookingFee,
+    creditApplied,
+    feePayable,
     urgentSurcharge,
-    payNow: add(deposit, bookingFee, urgentSurcharge),
+    payNow: add(deposit, feePayable, urgentSurcharge),
     balance: sub(agreedTotal, deposit),
   };
+}
+
+export const CREDIT_BUDGET_BP = 2_500; // 25% of a month's fee revenue may be redeemed as credit
+
+/**
+ * How much reward credit may still be redeemed this month: a quarter of the
+ * month's booking-fee revenue, less what has already been redeemed. Never
+ * negative, so a month that is over budget simply reads zero.
+ */
+export function creditBudgetLeft(feeRevenueMonth: Paisa, creditRedeemedMonth: Paisa): Paisa {
+  assertNonNegative(feeRevenueMonth, "Fee revenue");
+  assertNonNegative(creditRedeemedMonth, "Credit redeemed");
+  const budget = paisa(Math.floor((feeRevenueMonth * CREDIT_BUDGET_BP) / 10_000));
+  return paisa(Math.max(0, budget - creditRedeemedMonth));
 }
 
 /** Withholding applies to the released deposit only, never the balance. */

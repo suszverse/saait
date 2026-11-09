@@ -4,6 +4,7 @@ import { bsDayMonth, daysBetween } from "./nepali-date";
 import {
   bookingFeeFor,
   clientRefund,
+  creditBudgetLeft,
   depositFor,
   fullRefundBefore,
   guaranteeReserveFor,
@@ -60,6 +61,46 @@ describe("quote", () => {
     const q = quote({ packagePrice: rupees(35_000), urgent: true });
     expect(q.payNow).toBe(rupees(8_750 + 1_400 + 1_000));
     expect(q.balance).toBe(rupees(26_250));
+  });
+  it("charges the full fee when no credit is given", () => {
+    const q = quote({ packagePrice: rupees(65_000), peakSurcharge: rupees(8_000) });
+    expect(q.creditApplied).toBe(0);
+    expect(q.feePayable).toBe(rupees(2_920));
+  });
+});
+
+describe("reward credit", () => {
+  it("offsets the booking fee only, never the deposit or balance", () => {
+    const q = quote({ packagePrice: rupees(65_000), peakSurcharge: rupees(8_000), creditAvailable: rupees(400) });
+    expect(q.bookingFee).toBe(292_000);
+    expect(q.creditApplied).toBe(40_000);
+    expect(q.feePayable).toBe(252_000);
+    expect(q.deposit).toBe(1_825_000);
+    expect(q.balance).toBe(rupees(54_750));
+    expect(q.payNow).toBe(rupees(18_250 + 2_520));
+  });
+  it("caps at the fee when the client holds more credit than the fee", () => {
+    const q = quote({ packagePrice: rupees(65_000), peakSurcharge: rupees(8_000), creditAvailable: rupees(5_000) });
+    expect(q.creditApplied).toBe(rupees(2_920));
+    expect(q.feePayable).toBe(0);
+    expect(q.payNow).toBe(q.deposit);
+  });
+  it("splits VAT from the fee actually charged", () => {
+    const q = quote({ packagePrice: rupees(65_000), peakSurcharge: rupees(8_000), creditAvailable: rupees(400) });
+    const { net, vat } = vatInsideFee(q.feePayable);
+    expect(net + vat).toBe(rupees(2_520));
+  });
+  it("rejects negative credit", () => {
+    expect(() => quote({ packagePrice: rupees(65_000), creditAvailable: rupees(-1) })).toThrow(RangeError);
+  });
+  it("budgets a quarter of the month's fee revenue", () => {
+    expect(creditBudgetLeft(rupees(100_000), rupees(0))).toBe(rupees(25_000));
+    expect(creditBudgetLeft(rupees(100_000), rupees(10_000))).toBe(rupees(15_000));
+    expect(creditBudgetLeft(paisa(3), paisa(0))).toBe(0); // floor, not round
+  });
+  it("reads zero once the budget is used up", () => {
+    expect(creditBudgetLeft(rupees(100_000), rupees(25_000))).toBe(0);
+    expect(creditBudgetLeft(rupees(100_000), rupees(30_000))).toBe(0);
   });
 });
 
