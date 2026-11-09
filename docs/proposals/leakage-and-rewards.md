@@ -266,6 +266,40 @@ Figma row "Profiles": P1 Business: profile and portfolio editor (counts against 
 
 A marketplace for camera and equipment rental is a secondary line for after the booking platform is running. It fits the same shape (verified owner, calendar, deposit through Saait, balance direct, chat with the same checker) and the same accounts, so nothing in the data model should rule it out: listings become a second kind of bookable thing with a per-day price and a deposit. Not planned, not designed; recorded here so it is not forgotten.
 
+## 13. Who clients can see: the subscription buys visibility
+
+Founder's logic, 2026-11-09: a studio could skip the plan and sign up as a free freelancer. The answer is not to police it but to make the free tier worthless for that purpose.
+
+- **Clients only ever see subscribed businesses.** Search, the date results, nearby lists, urgent broadcasts to clients' requests and public profile URLs are all businesses on a paid plan. A freelancer has no public page, is not indexed, and cannot be found or messaged by a client. A studio that registers as a freelancer therefore gets no client traffic at all; the only work it can receive is crew hires from paying businesses, at crew day rates.
+- **The plan buys the listing; placement is earned or bought on top.** Listed: every business on the plan. Higher placement on wedding dates: Proven level or above. Featured slot at the top of a date: 3,000 points or the Studio plan (Rs 4,000) which includes one featured date a month. Order within a band stays open slots, then rating, never price.
+- **Freelancers stay anonymous by rule, not by choice.** The alias profile cannot carry a studio name, logo, watermark or location more precise than the city; onboarding rejects them. Freelancer KYC is a personal citizenship or licence; business KYC is the registration and PAN. One person can hold both accounts, and a freelancer who reaches Top can open a business profile at half price, which is the intended path.
+- **Plan lapses.** A business whose plan lapses keeps its account, bookings and record but drops out of client search after a 7-day grace period, and its urgent alerts stop. Rewards and level are kept for 6 months.
+
+## 14. Dark theme
+
+The site follows the device: `prefers-color-scheme` picks light or dark on first load, and a switch in the header (System · Light · Dark) overrides it. The choice is stored with the account and in the browser, applied before first paint so there is no flash.
+
+Dark values for the Saait tokens, as a second mode on the Colour collection in Figma:
+
+| Token | Light | Dark |
+|---|---|---|
+| Ink (text) | #1F1D2B | #F3F1EC |
+| Stone | #6A6775 | #A6A2B0 |
+| Line | #E4E0D8 | #2E2C3A |
+| Ground ("White") | #FFFFFF | #141320 |
+| Tint | #F4F2EE | #1E1C2A |
+| Sindoor | #B3121F | #E0394A |
+| Sindoor tint | #FBE4E6 | #351418 |
+| Marigold | #E89B00 | #F2B13D |
+| Marigold text | #7A4D00 | #F5C96B |
+| Marigold tint | #FFF4DC | #2E2410 |
+| Marigold line | #F0D28A | #4D3B12 |
+| Teal | #0E6B63 | #3FB8AC |
+| Teal tint | #E6F2F0 | #10302C |
+| Disabled text | #8A8794 | #6E6B7A |
+
+Rules carry over unchanged: Sindoor once per screen, Marigold for urgent only, one-pixel lines, no shadows. Photos and clips are not tinted. In code, Tailwind v4 `@theme` reads CSS variables set on `:root` and `[data-theme="dark"]`, with `color-scheme` set so form controls and scrollbars follow.
+
 ## Decisions needed from the founder
 
 1. Can clients ever reach a freelancer directly, for example only through the urgent flow or as a backup, or is the freelancer side business-only?

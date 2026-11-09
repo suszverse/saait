@@ -40,6 +40,7 @@ The redesign for business and freelancer tiers, secure chat and rewards, at 1440
 | Freelancers | F1 Today and job offers, F2 Chat with a blocked payment QR |
 | Operator desk | O1 Flagged messages, O2 Leakage signals |
 | Profiles and portfolios | P1 Business: profile and portfolio editor (plan limits 20 photos and 15 clips, upload screening, free reviews with one reply), P2 Freelancer: alias profile as a business sees it (alias, level, reliability, day rate, hire), P3 Freelancer: profile and portfolio editor (limits that grow with level, anonymity check). C3 gained a Reviews block. |
+| Dark theme | D1 Client home, D2 Client chat, D3 Business today, each a copy of the light frame with the Colour collection's Dark mode applied; S1 Settings: appearance (System · Light · Dark switch, data download and delete) |
 | Terms and agreement | J2 Join: agree to how Saait works (the seven rules, one checkbox), J3 Terms, privacy and chat rules (one page, sidebar contents) |
 
 New components on the Design system page: Chat bubble (Incoming, Outgoing, Blocked, System), Level badge (New, Trusted, Proven, Top), Stat tile, Alias avatar, Web header (Client, Business, Freelancer), Operator sidebar, Business card, Crew card, Thread row, Flag row, and ten icons (Message, Gift, Star, Flag, Eye off, QR, Send, Users, Blocked, Phone).
@@ -50,6 +51,7 @@ Choices made while designing, to confirm in review:
 - Rewards and credit use Teal, not Marigold, because Marigold belongs to the urgent flow.
 - Crew are paid by the business directly, to the payout account Saait verified. This is the assumption in the proposal's open decision 2.
 - Every account accepts the seven rules (message checking, 48-hour contact reveal, payments through the booking page, non-cash rewards, location not stored, verification, data retention) on J2 before sign-up completes. The wording is the same on J2, J3 and in `docs/legal/terms-draft.md`, so the app never says one thing and the terms another.
+- The Colour collection now has two modes, Light and Dark (values in proposal section 14). Every fill and stroke in the redesign is bound to a variable, so a frame switches theme by setting the collection mode; nothing is redrawn. New components: Theme switch (segmented System · Light · Dark), Icon/Moon, Icon/Sun. Every Web header variant carries a theme toggle button before the right-hand cluster.
 - Portfolio tiles are 160×120 placeholders; clip tiles carry a play glyph and duration. Dashed tiles are the remaining slots under the limit, so the limit is visible without reading the counter. Reviews say "free to leave, never paid for" wherever they appear (proposal section 11).
 - Location is a point, not a city (proposal section 9). C1 shows "Shooting near Traffic Chowk, Butwal" with a Pin icon, nearby-place chips with distances and a one-line note that the position is not stored. C2's reach chip reads "Near Traffic Chowk · within 30 km" and every card shows its distance. New icon: Icon/Pin.
 
