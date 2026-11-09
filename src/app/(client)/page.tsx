@@ -3,10 +3,12 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { CategoryChips } from "@/components/client/category-chips";
 import { DateStrip } from "@/components/client/date-strip";
+import { PlacePicker } from "@/components/client/place-picker";
 import { BellIcon, BottomNav, ChevronRightIcon, ClockIcon, ProviderTile } from "@/components/ui";
 import { formatRs, type Paisa } from "@/lib/money";
 import { addDays, bsDayMonth, bsDayMonthNp, type IsoDate } from "@/lib/nepali-date";
 import { db } from "@/server/db";
+import { nearestPlaces } from "@/server/places";
 import { getCategories, saaitDaysBetween } from "@/server/providers";
 import { searchFreeOnDate } from "@/server/search";
 import { parseClientQuery, queryString } from "@/server/client/query";
@@ -16,10 +18,11 @@ export const metadata: Metadata = { title: { absolute: "Saait · Lock your date"
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   await connection();
   const q = parseClientQuery(await searchParams);
-  const [categories, saait, found] = await Promise.all([
+  const [categories, saait, found, nearby] = await Promise.all([
     getCategories(db()),
     saaitDaysBetween(db(), addDays(q.date, -7), addDays(q.date, 14)),
     searchFreeOnDate(db(), q),
+    nearestPlaces(db(), { lat: q.lat, lng: q.lng }, 4),
   ]);
   const isSaait = saait.has(q.date as IsoDate);
   const n = found.results.length;
@@ -30,22 +33,18 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       : `Nobody is free on ${bsDayMonth(q.date)} yet. Try a nearby date.`;
   const href = (over: Partial<typeof q>) => `/?${queryString({ ...q, ...over })}`;
   const results = `/results?${queryString(q)}`;
+  // Everything but the point; the picker adds lat, lng and place in the browser.
+  const baseQuery = queryString({ date: q.date, category: q.category, band: q.band, radiusKm: q.radiusKm });
 
   return (
     <>
       <main className="mx-auto flex w-full max-w-page flex-1 flex-col gap-5 px-gutter pt-14 pb-8 md:px-gutter-desktop md:pt-10">
         <h1 className="sr-only">Saait: find a photographer free on your date</h1>
-        <header className="flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <p className="text-small text-stone">Shooting in</p>
-            <Link href="/login" aria-label="Notifications" className="flex size-11 items-center justify-center rounded-control md:hidden">
-              <BellIcon size={22} />
-            </Link>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-meta text-stone">Shooting near</span>
-            <span className="text-title font-extrabold text-ink">{found.place.label}</span>
-          </div>
+        <header className="relative">
+          <Link href="/login" aria-label="Notifications" className="absolute top-0 right-0 flex size-11 items-center justify-center rounded-control md:hidden">
+            <BellIcon size={22} />
+          </Link>
+          <PlacePicker current={{ label: found.place.label, lat: found.place.lat, lng: found.place.lng }} nearby={nearby} baseQuery={baseQuery} />
         </header>
 
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5 md:grid-cols-[minmax(0,420px)_minmax(0,1fr)] md:gap-x-16">
