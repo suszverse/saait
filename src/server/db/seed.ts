@@ -11,7 +11,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { fromBs } from "../../lib/nepali-date";
 import * as s from "./schema";
-import { CATEGORIES, CITIES, DEMO_CLIENT, OPERATORS, PROVIDERS, SAAIT_FALGUN_2083 } from "./seed-data";
+import { CATEGORIES, CITIES, DEMO_CLIENT, OPERATORS, PLACES, PROVIDERS, SAAIT_FALGUN_2083 } from "./seed-data";
 
 type DB = ReturnType<typeof drizzle<typeof s>>;
 
@@ -31,6 +31,12 @@ async function seedIn(db: DB) {
   }
   const cityBySlug = new Map((await db.select().from(s.cities)).map((c) => [c.slug, c]));
   const catBySlug = new Map((await db.select().from(s.serviceCategories)).map((c) => [c.slug, c]));
+
+  // Same rule as the rest: an operator's corrected coordinates or renamed venue survive a re-run.
+  for (const pl of PLACES) {
+    const { city, ...rest } = pl;
+    await db.insert(s.places).values({ ...rest, cityId: city ? cityBySlug.get(city)!.id : null }).onConflictDoNothing({ target: s.places.slug });
+  }
 
   for (const u of [...OPERATORS, { ...DEMO_CLIENT, role: "client" as const }]) {
     await db.insert(s.users).values(u).onConflictDoNothing({ target: s.users.phone });
@@ -116,6 +122,7 @@ async function seedIn(db: DB) {
     (select count(*) from cities)::int as cities,
     (select count(*) from service_categories)::int as categories,
     (select count(*) from auspicious_dates)::int as saait_days,
+    (select count(*) from places)::int as places,
     (select count(*) from provider_profiles)::int as providers,
     (select count(*) from provider_profiles where kyc_status = 'verified')::int as verified,
     (select count(*) from provider_profiles where kyc_status = 'verified' and kind = 'studio' and plan in ('pro', 'studio'))::int as listed,

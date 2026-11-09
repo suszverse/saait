@@ -11,6 +11,60 @@ export const CITIES = [
   { slug: "tansen", name: "Tansen", nameNp: "तानसेन", cluster: "rupandehi", lat: 27.8673, lng: 83.5467 },
 ] as const;
 
+export type SeedPlace = {
+  slug: string;
+  name: string;
+  nameNp: string;
+  kind: "district" | "municipality" | "ward" | "chowk" | "venue";
+  lat: number;
+  lng: number;
+  district: "Rupandehi" | "Palpa" | "Nawalparasi West";
+  /** Nearest CITIES entry, for the "near Butwal" grouping; districts have none. */
+  city?: (typeof CITIES)[number]["slug"];
+};
+
+/**
+ * Places a client can type in the venue field for the Rupandehi cluster.
+ * Coordinates are approximate town-centre points, good enough for distance
+ * sorting. Venues are fictional names on real chowks; none is a real business.
+ */
+export const PLACES: SeedPlace[] = [
+  // Districts
+  { slug: "rupandehi", name: "Rupandehi", nameNp: "रुपन्देही", kind: "district", lat: 27.6, lng: 83.4, district: "Rupandehi" },
+  { slug: "palpa", name: "Palpa", nameNp: "पाल्पा", kind: "district", lat: 27.87, lng: 83.55, district: "Palpa" },
+  { slug: "nawalparasi-west", name: "Nawalparasi West", nameNp: "नवलपरासी पश्चिम", kind: "district", lat: 27.6, lng: 83.7, district: "Nawalparasi West" },
+  // Municipalities
+  { slug: "butwal", name: "Butwal", nameNp: "बुटवल", kind: "municipality", lat: 27.7006, lng: 83.4483, district: "Rupandehi", city: "butwal" },
+  { slug: "bhairahawa", name: "Bhairahawa / Siddharthanagar", nameNp: "भैरहवा / सिद्धार्थनगर", kind: "municipality", lat: 27.5059, lng: 83.4517, district: "Rupandehi", city: "bhairahawa" },
+  { slug: "tilottama", name: "Tilottama", nameNp: "तिलोत्तमा", kind: "municipality", lat: 27.629, lng: 83.46, district: "Rupandehi", city: "butwal" },
+  { slug: "devdaha", name: "Devdaha", nameNp: "देवदह", kind: "municipality", lat: 27.678, lng: 83.55, district: "Rupandehi", city: "butwal" },
+  { slug: "sainamaina", name: "Sainamaina", nameNp: "सैनामैना", kind: "municipality", lat: 27.694, lng: 83.37, district: "Rupandehi", city: "butwal" },
+  { slug: "lumbini-sanskritik", name: "Lumbini", nameNp: "लुम्बिनी", kind: "municipality", lat: 27.484, lng: 83.276, district: "Rupandehi", city: "lumbini" },
+  { slug: "manigram", name: "Manigram", nameNp: "मणिग्राम", kind: "ward", lat: 27.615, lng: 83.455, district: "Rupandehi", city: "butwal" },
+  { slug: "sunwal", name: "Sunwal", nameNp: "सुनवल", kind: "municipality", lat: 27.668, lng: 83.621, district: "Nawalparasi West", city: "butwal" },
+  { slug: "bardaghat", name: "Bardaghat", nameNp: "बर्दघाट", kind: "municipality", lat: 27.556, lng: 83.743, district: "Nawalparasi West", city: "butwal" },
+  { slug: "tansen", name: "Tansen", nameNp: "तानसेन", kind: "municipality", lat: 27.8673, lng: 83.5467, district: "Palpa", city: "tansen" },
+  // Butwal chowks and neighbourhoods
+  { slug: "traffic-chowk-butwal", name: "Traffic Chowk, Butwal", nameNp: "ट्राफिक चोक, बुटवल", kind: "chowk", lat: 27.7006, lng: 83.4483, district: "Rupandehi", city: "butwal" },
+  { slug: "milan-chowk-butwal", name: "Milan Chowk, Butwal", nameNp: "मिलन चोक, बुटवल", kind: "chowk", lat: 27.6935, lng: 83.465, district: "Rupandehi", city: "butwal" },
+  { slug: "butwal-buspark", name: "Butwal Buspark", nameNp: "बुटवल बसपार्क", kind: "chowk", lat: 27.6985, lng: 83.4595, district: "Rupandehi", city: "butwal" },
+  { slug: "golpark-butwal", name: "Golpark, Butwal", nameNp: "गोलपार्क, बुटवल", kind: "chowk", lat: 27.695, lng: 83.466, district: "Rupandehi", city: "butwal" },
+  { slug: "kalikanagar-butwal", name: "Kalikanagar, Butwal", nameNp: "कालिकानगर, बुटवल", kind: "ward", lat: 27.685, lng: 83.46, district: "Rupandehi", city: "butwal" },
+  { slug: "devinagar-butwal", name: "Devinagar, Butwal", nameNp: "देवीनगर, बुटवल", kind: "ward", lat: 27.709, lng: 83.468, district: "Rupandehi", city: "butwal" },
+  { slug: "yogikuti-butwal", name: "Yogikuti, Butwal", nameNp: "योगिकुटी, बुटवल", kind: "chowk", lat: 27.676, lng: 83.465, district: "Rupandehi", city: "butwal" },
+  // Landmarks
+  { slug: "lumbini-mayadevi-temple", name: "Lumbini Mayadevi Temple", nameNp: "लुम्बिनी मायादेवी मन्दिर", kind: "venue", lat: 27.4696, lng: 83.2755, district: "Rupandehi", city: "lumbini" },
+  // Party palaces and banquets (fictional names)
+  { slug: "hotel-avenue-traffic-chowk", name: "Hotel Avenue, Traffic Chowk", nameNp: "होटल एभेन्यू, ट्राफिक चोक", kind: "venue", lat: 27.7012, lng: 83.4476, district: "Rupandehi", city: "butwal" },
+  { slug: "royal-party-palace-golpark", name: "Royal Party Palace, Golpark", nameNp: "रोयल पार्टी प्यालेस, गोलपार्क", kind: "venue", lat: 27.6958, lng: 83.4672, district: "Rupandehi", city: "butwal" },
+  { slug: "kalika-party-palace-kalikanagar", name: "Kalika Party Palace, Kalikanagar", nameNp: "कालिका पार्टी प्यालेस, कालिकानगर", kind: "venue", lat: 27.6842, lng: 83.4612, district: "Rupandehi", city: "butwal" },
+  { slug: "tinau-garden-banquet-devinagar", name: "Tinau Garden Banquet, Devinagar", nameNp: "तिनाउ गार्डेन ब्याङ्क्वेट, देवीनगर", kind: "venue", lat: 27.7102, lng: 83.4694, district: "Rupandehi", city: "butwal" },
+  { slug: "siddhartha-banquet-bhairahawa", name: "Siddhartha Banquet, Bhairahawa", nameNp: "सिद्धार्थ ब्याङ्क्वेट, भैरहवा", kind: "venue", lat: 27.5071, lng: 83.4538, district: "Rupandehi", city: "bhairahawa" },
+  { slug: "lumbini-grand-banquet-bhairahawa", name: "Lumbini Grand Banquet, Bhairahawa", nameNp: "लुम्बिनी ग्रान्ड ब्याङ्क्वेट, भैरहवा", kind: "venue", lat: 27.5112, lng: 83.449, district: "Rupandehi", city: "bhairahawa" },
+  { slug: "mayadevi-party-palace-bhairahawa", name: "Mayadevi Party Palace, Bhairahawa", nameNp: "मायादेवी पार्टी प्यालेस, भैरहवा", kind: "venue", lat: 27.5024, lng: 83.4561, district: "Rupandehi", city: "bhairahawa" },
+  { slug: "shreenagar-view-banquet-tansen", name: "Shreenagar View Banquet, Tansen", nameNp: "श्रीनगर भ्यु ब्याङ्क्वेट, तानसेन", kind: "venue", lat: 27.8702, lng: 83.5489, district: "Palpa", city: "tansen" },
+];
+
 export const CATEGORIES = [
   { slug: "wedding-photo", name: "Wedding photography", shortName: "Wedding photo" },
   { slug: "wedding-film", name: "Wedding video and cinematic", shortName: "Wedding film" },
