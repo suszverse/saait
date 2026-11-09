@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { BottomNav, ButtonLink, CheckIcon, StatusChip } from "@/components/ui";
 import { formatRs, paisa } from "@/lib/money";
-import { bsLongWithGregorian } from "@/lib/nepali-date";
+import { bsLongWithGregorian, todayInNepal } from "@/lib/nepali-date";
 import { requireUser } from "@/server/auth/guards";
+import { contactFor } from "@/server/booking-contact";
 import { bookingForClient, holdState } from "@/server/bookings";
 import { db } from "@/server/db";
 
@@ -31,6 +32,7 @@ export default async function BookingPage({ params }: PageProps<"/bookings/[code
   const lapsed = b.status === "held" && !(await holdState(db(), b.id)).live;
   const st = lapsed ? { label: "Hold expired", type: "rejected" as const } : STATUS[b.status];
   const who = p.kind === "studio" ? "the studio" : "the provider";
+  const contact = await contactFor(db(), b, user);
 
   return (
     <>
@@ -75,6 +77,22 @@ export default async function BookingPage({ params }: PageProps<"/bookings/[code
             <dd className="font-semibold whitespace-nowrap">{formatRs(paisa(b.balanceDue))}</dd>
           </div>
         </dl>
+        {contact.kind !== "none" && (
+          <section className="flex flex-col gap-1 rounded-card border border-line px-4 py-3.5 text-small">
+            <h2 className="text-stone">Contact</h2>
+            {contact.kind === "revealed" ? (
+              <p className="font-semibold">
+                {contact.name},{" "}
+                <a href={`tel:${contact.phone}`} className="underline">
+                  {contact.phone}
+                </a>
+              </p>
+            ) : (
+              <p className="font-semibold">Shown from {bsLongWithGregorian(todayInNepal(contact.revealAt))}</p>
+            )}
+            <p className="text-meta text-stone">Phone numbers are shared 48 hours before your event.</p>
+          </section>
+        )}
         {b.status === "held" && !lapsed && <ButtonLink href={`/bookings/${b.code}/pay`}>Pay {formatRs(paisa(b.depositAmount + b.bookingFee))} to lock</ButtonLink>}
         {lapsed && (
           <p className="rounded-card bg-tint px-4 py-3.5 text-small">
