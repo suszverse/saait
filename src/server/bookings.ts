@@ -14,7 +14,7 @@ import { and, eq, inArray, lte, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { z } from "zod";
 import * as s from "./db/schema";
-import { slotsLeft } from "./providers";
+import { isClientVisible, slotsLeft } from "./providers";
 import type { SmsSender } from "./sms";
 import type { PaymentGateway, PaymentMethod } from "./payments";
 import { PAYMENT_METHODS } from "./payments";
@@ -70,6 +70,8 @@ export async function priceCheckout(db: Db, input: { providerSlug: string; packa
     .where(and(eq(s.packages.id, input.packageId), eq(s.providerProfiles.slug, input.providerSlug), eq(s.packages.active, true)));
   if (!row) throw new BookingError("not_found", "That package is not available.");
   if (row.p.kycStatus !== "verified") throw new BookingError("not_bookable", "This provider cannot take bookings right now.");
+  // Crew (freelancers) and unsubscribed studios are hired by businesses, not by clients.
+  if (!isClientVisible(row.p)) throw new BookingError("not_bookable", "This provider cannot be booked directly.");
   const addons = await db.select().from(s.packageAddons).where(eq(s.packageAddons.packageId, row.pkg.id));
   const chosen = addons.filter((a) => input.addonIds.includes(a.id));
   if (chosen.length !== new Set(input.addonIds).size) throw new BookingError("bad_addon", "One of those add-ons is not on this package.");

@@ -110,6 +110,15 @@ describe("checkout", () => {
     await expect(checkout(deps, clients[0], input({ method: "cash" }))).rejects.toThrow();
   });
 
+  it("refuses crew and unsubscribed studios, even when verified", async () => {
+    for (const slug of ["golden-hour-nepal", "siddhartha-photo"]) {
+      const [p] = await db.select().from(s.providerProfiles).where(eq(s.providerProfiles.slug, slug));
+      expect(p.kycStatus).toBe("verified");
+      const [pkg] = await db.select().from(s.packages).where(eq(s.packages.providerId, p.id));
+      await expect(checkout(deps, clients[0], input({ providerSlug: slug, packageId: pkg.id }))).rejects.toMatchObject({ code: "not_bookable", message: "This provider cannot be booked directly." });
+    }
+  });
+
   it("refuses dates more than two years ahead", async () => {
     await expect(checkout(deps, clients[0], input({ date: "2099-06-01" }))).rejects.toThrow("two years ahead");
     await expect(checkout(deps, clients[0], input({ date: "9999-12-31" }))).rejects.toThrow();

@@ -1,8 +1,9 @@
 /**
  * Free-on-date search, system plan section 5 and design principle 1.
  *
- * Who appears: verified providers offering the category, within reach of the
- * chosen city, with a slot left on the day.
+ * Who appears: verified businesses on a paid plan offering the category,
+ * within reach of the chosen city, with a slot left on the day. Freelancers
+ * are never listed (docs/proposals/leakage-and-rewards.md section 13).
  *
  * Order: availability (any slot left; all results qualify), then rating, then
  * distance. Never price. Budget bands filter by a provider's from-price for
@@ -15,7 +16,7 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import * as s from "./db/schema";
-import { isSaait, slotsLeft, type Db } from "./providers";
+import { clientVisible, isSaait, slotsLeft, type Db } from "./providers";
 import { isIsoDate, type IsoDate } from "@/lib/nepali-date";
 import { rupees, type Paisa } from "@/lib/money";
 
@@ -76,7 +77,7 @@ export async function searchFreeOnDate(db: Db, q: SearchQuery, now = new Date())
     .from(s.providerProfiles)
     .innerJoin(s.packages, and(eq(s.packages.providerId, s.providerProfiles.id), eq(s.packages.categoryId, category.id), eq(s.packages.active, true)))
     .leftJoin(s.cities, eq(s.cities.id, s.providerProfiles.homeCityId))
-    .where(eq(s.providerProfiles.kycStatus, "verified"));
+    .where(clientVisible());
 
   const byProvider = new Map<string, { p: (typeof rows)[number]["p"]; homeCity: (typeof rows)[number]["homeCity"]; pkgs: (typeof rows)[number]["pkg"][] }>();
   for (const r of rows) {

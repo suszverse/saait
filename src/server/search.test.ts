@@ -6,7 +6,7 @@ import { fromBs } from "@/lib/nepali-date";
 import { rupees } from "@/lib/money";
 import * as s from "./db/schema";
 import { seed } from "./db/seed";
-import { slotsLeft } from "./providers";
+import { getVerifiedProvider, slotsLeft } from "./providers";
 import { compareResults, searchFreeOnDate, searchQuery } from "./search";
 
 const client = postgres(process.env.DATABASE_URL_TEST ?? "", { max: 1, onnotice: () => {} });
@@ -29,6 +29,19 @@ describe("free-on-date search", () => {
     const slugs = results.map((r) => r.slug);
     expect(slugs).toContain("shrestha-studio");
     for (const hidden of ["kiran-rai", "ramesh-thapa-films", "lumbini-wedding-co", "sabina-shrestha"]) expect(slugs).not.toContain(hidden);
+  });
+
+  it("lists only subscribed businesses, never crew or a lapsed studio", async () => {
+    const slugs = (await searchFreeOnDate(db, q())).results.map((r) => r.slug);
+    // Verified freelancers are crew hired by businesses; they have no public listing.
+    for (const crew of ["golden-hour-nepal", "pixel-and-palki"]) expect(slugs).not.toContain(crew);
+    // A verified studio on the free plan is not listed either.
+    expect(slugs).not.toContain("siddhartha-photo");
+    const [crew] = await db.select().from(s.providerProfiles).where(eq(s.providerProfiles.slug, "golden-hour-nepal"));
+    expect(crew.kycStatus).toBe("verified");
+    expect(await getVerifiedProvider(db, "golden-hour-nepal")).toBeNull();
+    expect(await getVerifiedProvider(db, "siddhartha-photo")).toBeNull();
+    expect(await getVerifiedProvider(db, "shrestha-studio")).not.toBeNull();
   });
 
   it("drops a provider whose day is blocked", async () => {

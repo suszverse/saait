@@ -1,7 +1,9 @@
 /**
  * Read models for providers, packages and the calendar. Pure functions over a
  * Drizzle database so pages and tests share them. Only verified providers are
- * ever returned to clients (KYC is a gate, system plan section 15).
+ * ever returned to clients (KYC is a gate, system plan section 15), and only
+ * subscribed businesses: a freelancer is crew hired by a business and is never
+ * listed (docs/proposals/leakage-and-rewards.md section 13).
  */
 import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
@@ -16,6 +18,21 @@ export type Db = PostgresJsDatabase<typeof s>;
  * once, and it frees itself when the hold expires.
  */
 export const OCCUPYING_BOOKING = ["confirmed", "in_progress", "delivered", "completed", "disputed"] as const;
+
+/** Plans that buy a client-facing listing. `free` is for crew only. */
+export const LISTED_PLANS = ["pro", "studio"] as const;
+
+type Visibility = Pick<typeof s.providerProfiles.$inferSelect, "kind" | "plan" | "kycStatus">;
+
+/** Can a client see and book this provider: a verified studio on a paid plan. */
+export function isClientVisible(p: Visibility): boolean {
+  return p.kycStatus === "verified" && p.kind === "studio" && (LISTED_PLANS as readonly string[]).includes(p.plan);
+}
+
+/** The same rule as a where-clause, for every query that feeds a client page. */
+export function clientVisible() {
+  return and(eq(s.providerProfiles.kycStatus, "verified"), eq(s.providerProfiles.kind, "studio"), inArray(s.providerProfiles.plan, [...LISTED_PLANS]));
+}
 
 export async function isSaait(db: Db, day: IsoDate): Promise<boolean> {
   const r = await db.select({ day: s.auspiciousDates.day }).from(s.auspiciousDates).where(eq(s.auspiciousDates.day, day));
@@ -70,7 +87,7 @@ export async function getVerifiedProvider(db: Db, slug: string) {
     .select({ profile: s.providerProfiles, city: s.cities })
     .from(s.providerProfiles)
     .leftJoin(s.cities, eq(s.cities.id, s.providerProfiles.homeCityId))
-    .where(and(eq(s.providerProfiles.slug, slug), eq(s.providerProfiles.kycStatus, "verified")));
+    .where(and(eq(s.providerProfiles.slug, slug), clientVisible()));
   if (!p) return null;
   const pkgs = await db
     .select({ pkg: s.packages, category: s.serviceCategories })

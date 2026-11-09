@@ -48,6 +48,7 @@ async function seedIn(db: DB) {
       displayName: p.displayName,
       businessName: p.businessName ?? null,
       kind: p.kind,
+      alias: p.alias ?? null,
       homeCityId: city.id,
       lat: city.lat,
       lng: city.lng,
@@ -117,6 +118,7 @@ async function seedIn(db: DB) {
     (select count(*) from auspicious_dates)::int as saait_days,
     (select count(*) from provider_profiles)::int as providers,
     (select count(*) from provider_profiles where kyc_status = 'verified')::int as verified,
+    (select count(*) from provider_profiles where kyc_status = 'verified' and kind = 'studio' and plan in ('pro', 'studio'))::int as listed,
     (select count(*) from packages)::int as packages,
     (select count(*) from users)::int as users`);
   return counts[0];

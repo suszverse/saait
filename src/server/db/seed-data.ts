@@ -47,6 +47,8 @@ export type SeedProvider = {
   displayName: string;
   businessName?: string;
   kind: "freelancer" | "studio";
+  /** Required for freelancers: the "Crew A3-417" name a business sees instead of theirs. */
+  alias?: string;
   city: (typeof CITIES)[number]["slug"];
   phone: string;
   since: number;
@@ -107,33 +109,36 @@ export const PROVIDERS: SeedProvider[] = [
     packages: weddingTrio(48_000, [0, 0, 0], { addons: ADDONS }),
   },
   {
-    slug: "anita-gurung-photography", displayName: "Anita Gurung Photography", kind: "freelancer", city: "butwal",
-    phone: "+9779857000003", since: 2019, rating: 4.7, ratingCount: 12, completed: 6, responseMinutes: 120, capacity: 1, plan: "free",
+    slug: "anita-gurung-photography", displayName: "Anita Gurung Photography", kind: "studio", city: "butwal",
+    phone: "+9779857000003", since: 2019, rating: 4.7, ratingCount: 12, completed: 6, responseMinutes: 120, capacity: 1, plan: "pro",
     kyc: "verified", pan: "301245678", citizenship: "27-01-71-00412", payout: { method: "khalti", name: "Anita Gurung", number: "98••••4471" },
     tones: rot(2), photoCount: 24, bio: "Candid wedding and portrait photographer in Butwal.",
     categories: ["wedding-photo", "portrait"],
     packages: weddingTrio(22_000, [3_000, 5_000, 0]).slice(0, 2),
   },
-  // Anita is verified here because the Results screen shows her as a
-  // bookable provider; the Admin screen's use of her name as a pending
+  // Anita is verified and on a plan because the Results screen shows her as
+  // a bookable provider; the Admin screen's use of her name as a pending
   // submission is a mockup inconsistency (docs/design/figma.md).
-  // More verified providers so the free-on-date list is realistic.
+  // More verified providers so the free-on-date list is realistic. Clients
+  // only see studios on a paid plan (leakage proposal section 13), so the
+  // verified freelancers here are crew for later hiring tasks, and the
+  // free-plan studio stands for a business whose plan has lapsed.
   ...([
-    ["himal-captures", "Himal Captures", "butwal", 4.8, 33, 19, 28_000, 4_000],
-    ["lens-of-lumbini", "Lens of Lumbini", "lumbini", 4.6, 21, 11, 30_000, 4_000],
-    ["tansen-frames", "Tansen Frames", "tansen", 4.7, 18, 9, 26_000, 3_000],
-    ["sapana-studio", "Sapana Studio", "butwal", 4.5, 27, 15, 40_000, 6_000],
-    ["rupandehi-weddings", "Rupandehi Weddings", "bhairahawa", 4.6, 44, 25, 55_000, 8_000],
-    ["bikash-thapa-films", "Bikash Thapa Films", "butwal", 4.9, 15, 8, 60_000, 0],
-    ["golden-hour-nepal", "Golden Hour Nepal", "butwal", 4.4, 9, 4, 18_000, 2_000],
-    ["siddhartha-photo", "Siddhartha Photo", "bhairahawa", 4.5, 30, 17, 25_000, 3_000],
-    ["mandap-moments", "Mandap Moments", "butwal", 4.7, 26, 14, 38_000, 5_000],
-    ["pixel-and-palki", "Pixel and Palki", "lumbini", 4.3, 7, 3, 20_000, 2_000],
-    ["sindoor-stories", "Sindoor Stories", "butwal", 4.8, 19, 12, 70_000, 10_000],
-  ] as const).map(([slug, name, city, rating, count, done, base, peak], i): SeedProvider => ({
-    slug, displayName: name, kind: base >= 40_000 ? "studio" : "freelancer", city,
+    ["himal-captures", "Himal Captures", "butwal", "studio", "pro", 4.8, 33, 19, 28_000, 4_000],
+    ["lens-of-lumbini", "Lens of Lumbini", "lumbini", "studio", "pro", 4.6, 21, 11, 30_000, 4_000],
+    ["tansen-frames", "Tansen Frames", "tansen", "studio", "pro", 4.7, 18, 9, 26_000, 3_000],
+    ["sapana-studio", "Sapana Studio", "butwal", "studio", "pro", 4.5, 27, 15, 40_000, 6_000],
+    ["rupandehi-weddings", "Rupandehi Weddings", "bhairahawa", "studio", "studio", 4.6, 44, 25, 55_000, 8_000],
+    ["bikash-thapa-films", "Bikash Thapa Films", "butwal", "studio", "pro", 4.9, 15, 8, 60_000, 0],
+    ["golden-hour-nepal", "Golden Hour Nepal", "butwal", "freelancer", "free", 4.4, 9, 4, 18_000, 2_000, "Crew C4-821"],
+    ["siddhartha-photo", "Siddhartha Photo", "bhairahawa", "studio", "free", 4.5, 30, 17, 25_000, 3_000],
+    ["mandap-moments", "Mandap Moments", "butwal", "studio", "pro", 4.7, 26, 14, 38_000, 5_000],
+    ["pixel-and-palki", "Pixel and Palki", "lumbini", "freelancer", "free", 4.3, 7, 3, 20_000, 2_000, "Crew R3-055"],
+    ["sindoor-stories", "Sindoor Stories", "butwal", "studio", "studio", 4.8, 19, 12, 70_000, 10_000],
+  ] as const).map(([slug, name, city, kind, plan, rating, count, done, base, peak, alias], i): SeedProvider => ({
+    slug, displayName: name, kind, alias, city,
     phone: `+97798570001${String(i).padStart(2, "0")}`, since: 2012 + (i % 9), rating, ratingCount: count, completed: done,
-    responseMinutes: 60 + (i % 4) * 60, capacity: base >= 40_000 ? 2 : 1, plan: i % 3 === 0 ? "pro" : "free",
+    responseMinutes: 60 + (i % 4) * 60, capacity: kind === "studio" ? 2 : 1, plan,
     kyc: "verified", pan: `70${String(1000000 + i * 7919).slice(0, 7)}`, citizenship: `27-0${(i % 9) + 1}-7${i % 10}-0${String(500 + i)}`,
     payout: { method: "esewa", name, number: `98••••${String(3000 + i)}` }, tones: rot(i + 3), photoCount: 12 + i * 3,
     bio: "Wedding and event photography in the Butwal cluster.",
@@ -149,7 +154,7 @@ export const PROVIDERS: SeedProvider[] = [
     packages: weddingTrio(45_000, [6_000, 9_000, 0]),
   },
   {
-    slug: "kiran-rai", displayName: "Kiran Rai", kind: "freelancer", city: "butwal", phone: "+9779857000202",
+    slug: "kiran-rai", displayName: "Kiran Rai", kind: "freelancer", alias: "Crew K1-204", city: "butwal", phone: "+9779857000202",
     since: 2021, rating: 0, ratingCount: 0, completed: 0, responseMinutes: 0, capacity: 1, plan: "free",
     kyc: "submitted", pan: "604567890", citizenship: "27-01-75-01200",
     payout: { method: "esewa", name: "Kiran Rai", number: "98••••5512" }, tones: rot(2), photoCount: 0, bio: "", categories: ["wedding-photo", "event"],
@@ -163,7 +168,7 @@ export const PROVIDERS: SeedProvider[] = [
     packages: weddingTrio(50_000, [7_000, 10_000, 0]),
   },
   {
-    slug: "sabina-shrestha", displayName: "Sabina Shrestha", kind: "freelancer", city: "butwal", phone: "+9779857000204",
+    slug: "sabina-shrestha", displayName: "Sabina Shrestha", kind: "freelancer", alias: "Crew S2-310", city: "butwal", phone: "+9779857000204",
     since: 2017, rating: 4.6, ratingCount: 14, completed: 9, responseMinutes: 120, capacity: 1, plan: "free",
     kyc: "reverification_due", pan: "606789012", citizenship: "27-01-69-00654",
     payout: { method: "khalti", name: "Sabina Shrestha", number: "98••••8820" }, tones: rot(4), photoCount: 18, bio: "", categories: ["wedding-photo"],
