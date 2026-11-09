@@ -3,14 +3,17 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { requireUser } from "@/server/auth/guards";
 import { db } from "@/server/db";
-import { providerForUser } from "@/server/provider-account";
+import { CREW_ROLES, providerForUser } from "@/server/provider-account";
 import { getCategories, getCities } from "@/server/providers";
-import { OnboardingForm } from "./onboarding-form";
+import { OnboardingForm, type ProviderKind } from "./onboarding-form";
 
 export const metadata: Metadata = { title: "List your work" };
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ kind?: string }> }) {
   await connection();
+  // The join page links here with ?kind= already chosen; anything else starts as a freelancer.
+  const { kind } = await searchParams;
+  const initialKind: ProviderKind = kind === "studio" ? "studio" : "freelancer";
   const user = await requireUser("/provider/onboarding");
   if (await providerForUser(user.id)) redirect("/provider/kyc");
   if (user.role === "operator" || user.role === "admin") {
@@ -28,7 +31,7 @@ export default async function OnboardingPage() {
         <h1 className="text-title font-extrabold">List your work on Saait</h1>
         <p className="text-small text-stone">Fixed packages, a calendar, and deposits held for you. Clients see you once our team has checked your ID and PAN.</p>
       </div>
-      <OnboardingForm cities={cities.map((c) => ({ slug: c.slug, name: c.name }))} categories={categories.map((c) => ({ slug: c.slug, shortName: c.shortName }))} />
+      <OnboardingForm cities={cities.map((c) => ({ slug: c.slug, name: c.name }))} categories={categories.map((c) => ({ slug: c.slug, shortName: c.shortName }))} roles={CREW_ROLES} initialKind={initialKind} />
     </main>
   );
 }

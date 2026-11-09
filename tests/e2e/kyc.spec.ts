@@ -1,5 +1,9 @@
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { jpeg, signIn } from "./helpers";
+import { db, jpeg, signIn } from "./helpers";
+
+/** The terms version shipped in src/content/terms.md, so the acceptance below matches what the server checks. */
+const TERMS_VERSION = readFileSync("src/content/terms.md", "utf8").match(/^version:\s*(\S+)/m)?.[1] ?? "";
 
 const DATE = "2027-02-26"; // Falgun 14
 const RESULTS = `/results?city=butwal&date=${DATE}&category=wedding-photo`;
@@ -12,8 +16,14 @@ test("an unverified provider stays out of search until an operator approves them
   const prov = await browser.newPage();
   await prov.goto("/provider/onboarding");
   await signIn(prov, `986660000${n}`);
-  await prov.goto("/provider/onboarding");
+  // Onboarding refuses anyone who has not accepted the terms. Until the join
+  // flow (/join/agree) lands, record the acceptance directly.
+  await db()`insert into agreement_acceptances (user_id, version) select id, ${TERMS_VERSION} from users where phone = ${`+977986660000${n}`} on conflict do nothing`;
+  // Only a studio is listed to clients; a freelancer is crew hired by studios.
+  await prov.goto("/provider/onboarding?kind=studio");
+  await expect(prov.getByLabel("A studio with a team")).toBeChecked();
   await prov.getByLabel("Your full name, as on your ID").fill(`Ram Pokhrel ${n}`);
+  await prov.getByLabel("Registered business name").fill(`${NAME} Pvt. Ltd.`);
   await prov.getByLabel("Business or display name").fill(NAME);
   await prov.getByLabel("Home city").selectOption("butwal");
   await prov.getByText("Wedding photo", { exact: true }).click();
