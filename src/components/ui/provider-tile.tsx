@@ -26,7 +26,7 @@ export function ProviderTile({
         {/* Placeholder until real portfolio images arrive; decorative. */}
         <span aria-hidden="true" className="absolute inset-0" style={{ background: tone }} />
         {verified && (
-          <span className="absolute top-2.5 left-2.5 flex h-6.5 items-center gap-1 rounded-chip bg-white px-2.5 text-micro font-bold text-teal">
+          <span className="absolute top-2.5 left-2.5 flex h-6.5 items-center gap-1 rounded-chip bg-ground px-2.5 text-micro font-bold text-teal">
             <CheckIcon size={12} strokeWidth={3} />
             Verified
           </span>

@@ -14,8 +14,8 @@ const base =
   "aria-disabled:pointer-events-none aria-disabled:bg-line aria-disabled:text-disabled-text aria-disabled:border-transparent";
 
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-sindoor text-white hover:bg-sindoor-hover",
-  secondary: "bg-white text-ink border border-ink hover:bg-tint",
+  primary: "bg-sindoor text-on-accent hover:bg-sindoor-hover",
+  secondary: "bg-ground text-ink border border-ink hover:bg-tint",
   urgent: "bg-marigold text-ink hover:bg-marigold-hover",
   tertiary: "bg-tint text-ink font-semibold hover:bg-line",
 };

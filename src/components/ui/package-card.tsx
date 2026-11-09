@@ -30,7 +30,7 @@ export function PackageCard({
     <As
       className={`flex w-full flex-col rounded-card border text-left ${
         regular ? "gap-2.5 p-4.5" : "gap-1.5 px-4 py-3.5"
-      } ${selected ? "border-ink" : "border-line"} ${!regular && selected ? "bg-tint" : "bg-white"}`}
+      } ${selected ? "border-ink" : "border-line"} ${!regular && selected ? "bg-tint" : "bg-ground"}`}
     >
       <span className="flex w-full items-baseline justify-between gap-2">
         <span className={regular ? "text-heading font-bold" : "text-lead font-bold"}>{data.name}</span>

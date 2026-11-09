@@ -22,7 +22,7 @@ export function TextField({
 } & ComponentProps<"input"> & ComponentProps<"textarea">) {
   const described = error ? `${id}-error` : helper ? `${id}-helper` : undefined;
   const field =
-    "w-full min-w-0 rounded-button bg-white px-3.5 text-body text-ink placeholder:text-stone/70 outline-none " +
+    "w-full min-w-0 rounded-button bg-ground px-3.5 text-body text-ink placeholder:text-stone/70 outline-none " +
     (error
       ? "border-2 border-sindoor"
       : // Focus reads as a 2 px Ink border: 1 px border plus a 1 px inset ring, so text never shifts.

@@ -26,7 +26,7 @@ export function BottomNav({ role, active }: { role: NavRole; active: string }) {
   return (
     <nav
       aria-label={role === "client" ? "Main" : "Provider"}
-      className="sticky bottom-0 z-10 grid h-21 grid-cols-4 border-t border-line bg-white px-2 pt-2 pb-5 md:hidden"
+      className="sticky bottom-0 z-10 grid h-21 grid-cols-4 border-t border-line bg-ground px-2 pt-2 pb-5 md:hidden"
     >
       {NAVS[role].map(({ key, label, href, Icon }) => {
         const on = key === active;
@@ -49,7 +49,7 @@ export function BottomNav({ role, active }: { role: NavRole; active: string }) {
 /** Desktop header for the website; the phone uses BottomNav. */
 export function SiteHeader({ role, active }: { role: NavRole; active: string }) {
   return (
-    <header className="hidden border-b border-line bg-white md:block">
+    <header className="hidden border-b border-line bg-ground md:block">
       <div className="mx-auto flex h-16 max-w-page items-center justify-between px-gutter-desktop">
         <Link href={role === "client" ? "/" : "/provider"} className="text-brand font-extrabold no-underline">
           Saait

@@ -6,7 +6,7 @@ const filterBase =
   "inline-flex h-10 shrink-0 items-center rounded-chip border px-3.5 text-small font-semibold whitespace-nowrap transition-colors";
 
 export function filterChipClass(selected: boolean) {
-  return `${filterBase} ${selected ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:border-ink"}`;
+  return `${filterBase} ${selected ? "border-ink bg-ink text-on-accent" : "border-line bg-ground text-ink hover:border-ink"}`;
 }
 
 /** Single-select filter chip rendered as a link so the choice lives in the URL. */
