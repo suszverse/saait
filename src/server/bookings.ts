@@ -29,6 +29,8 @@ export const HOLD_HOURS = 24;
 /** Bookings open up to two years ahead, well inside the BS calendar tables. */
 export const MAX_DAYS_AHEAD = 730;
 export const URGENT_WINDOW_DAYS = 3; // inside 72 hours
+/** Same box as the `places_in_nepal` check in the schema. */
+export const NEPAL_BOUNDS = { lat: [26.3, 30.5], lng: [80.0, 88.3] } as const;
 
 export class BookingError extends Error {
   constructor(
@@ -47,6 +49,8 @@ export const checkoutInput = z.object({
     .refine(isIsoDate, "Pick a date.")
     .refine((d) => isIsoDate(d) && daysBetween(todayInNepal(), d as IsoDate) <= MAX_DAYS_AHEAD, "Bookings open up to two years ahead. Pick an earlier date."),
   venue: z.string().trim().min(3, "Enter the venue name and town.").max(200, "Keep the venue under 200 characters."),
+  venueLat: z.coerce.number().min(NEPAL_BOUNDS.lat[0], "Pick a venue inside Nepal.").max(NEPAL_BOUNDS.lat[1], "Pick a venue inside Nepal."),
+  venueLng: z.coerce.number().min(NEPAL_BOUNDS.lng[0], "Pick a venue inside Nepal.").max(NEPAL_BOUNDS.lng[1], "Pick a venue inside Nepal."),
   addonIds: z.array(z.string().uuid()).max(10).default([]),
   method: z.enum(PAYMENT_METHODS),
 });
@@ -116,6 +120,8 @@ export async function checkout(deps: BookingDeps, client: { id: string; phone: s
         urgency,
         status: "held",
         venue: input.venue,
+        venueLat: input.venueLat,
+        venueLng: input.venueLng,
         contactPhone: client.phone,
         packageName: pkg.name,
         packagePrice: q.packagePrice,

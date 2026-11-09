@@ -56,6 +56,8 @@ const input = (over: Record<string, unknown> = {}) => ({
   packageId: standardId,
   date: FALGUN_12,
   venue: "Siddhartha Party Palace, Butwal",
+  venueLat: 27.7006,
+  venueLng: 83.4483,
   method: "esewa",
   ...over,
 });
@@ -79,6 +81,19 @@ describe("checkout", () => {
     expect(redirectTo).toBe(`/bookings/${booking.code}/pay`);
     const [p] = await db.select().from(s.payments);
     expect(p.amount).toBe(rupees(21_170));
+  });
+
+  it("keeps the venue pin on the booking row", async () => {
+    const { booking } = await checkout(deps, clients[0], input({ venueLat: "27.7006", venueLng: "83.4483" }));
+    const [b] = await db.select().from(s.bookings).where(eq(s.bookings.id, booking.id));
+    expect(b.venueLat).toBe(27.7006);
+    expect(b.venueLng).toBe(83.4483);
+  });
+
+  it("refuses a venue pin outside Nepal, naming the field", async () => {
+    await expect(checkout(deps, clients[0], input({ venueLat: 13.08 }))).rejects.toMatchObject({ issues: [{ path: ["venueLat"], message: "Pick a venue inside Nepal." }] });
+    await expect(checkout(deps, clients[0], input({ venueLng: 77.2 }))).rejects.toMatchObject({ issues: [{ path: ["venueLng"] }] });
+    await expect(checkout(deps, clients[0], input({ venueLat: undefined }))).rejects.toMatchObject({ issues: [{ path: ["venueLat"] }] });
   });
 
   it("adds add-ons and refuses add-ons from another package", async () => {

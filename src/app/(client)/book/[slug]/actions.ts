@@ -6,7 +6,8 @@ import { requireUser } from "@/server/auth/guards";
 import { BookingError, checkout } from "@/server/bookings";
 import { bookingDeps } from "@/server/services";
 
-export type CheckoutState = { error?: string; field?: "venue" };
+const FIELDS = ["venue", "venueLat", "venueLng"] as const;
+export type CheckoutState = { error?: string; field?: (typeof FIELDS)[number] };
 
 export async function checkoutAction(_prev: CheckoutState, form: FormData): Promise<CheckoutState> {
   const slug = String(form.get("providerSlug") ?? "");
@@ -18,6 +19,8 @@ export async function checkoutAction(_prev: CheckoutState, form: FormData): Prom
       packageId: form.get("packageId"),
       date: form.get("date"),
       venue: form.get("venue"),
+      venueLat: form.get("venueLat"),
+      venueLng: form.get("venueLng"),
       addonIds: form.getAll("addon"),
       method: form.get("method"),
     });
@@ -25,7 +28,8 @@ export async function checkoutAction(_prev: CheckoutState, form: FormData): Prom
   } catch (e) {
     if (e instanceof ZodError) {
       const issue = e.issues[0];
-      return { error: issue.message, field: issue.path[0] === "venue" ? "venue" : undefined };
+      const field = FIELDS.find((f) => f === issue.path[0]);
+      return { error: issue.message, field };
     }
     if (e instanceof BookingError) return { error: e.message };
     throw e;

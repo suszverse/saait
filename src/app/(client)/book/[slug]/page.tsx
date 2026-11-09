@@ -6,12 +6,30 @@ import { ChevronLeftIcon, SaaitDot } from "@/components/ui";
 import { fullRefundBefore } from "@/lib/fees";
 import { bsDayMonth, bsLongWithGregorian, type IsoDate } from "@/lib/nepali-date";
 import { requireUser } from "@/server/auth/guards";
-import { BookingError, priceCheckout } from "@/server/bookings";
+import { BookingError, NEPAL_BOUNDS, priceCheckout } from "@/server/bookings";
 import { queryString, parseClientQuery } from "@/server/client/query";
 import { db } from "@/server/db";
 import { BookingForm } from "./booking-form";
 
 export const metadata: Metadata = { title: "Lock the date" };
+
+/** Traffic Chowk, Butwal: where a search lands when no point was chosen. */
+const DEFAULT_PIN = { lat: 27.7006, lng: 83.4483, label: "Traffic Chowk, Butwal" };
+
+/**
+ * The search point travels in the URL as `lat`/`lng` (and a `place` label).
+ * Anything missing or outside Nepal falls back to the default pin; the server
+ * checks the bounds again on submit.
+ */
+function venuePin(sp: Record<string, string | string[] | undefined>) {
+  const num = (k: string) => (typeof sp[k] === "string" && sp[k] !== "" ? Number(sp[k]) : NaN);
+  const lat = num("lat");
+  const lng = num("lng");
+  const inside = lat >= NEPAL_BOUNDS.lat[0] && lat <= NEPAL_BOUNDS.lat[1] && lng >= NEPAL_BOUNDS.lng[0] && lng <= NEPAL_BOUNDS.lng[1];
+  if (!inside) return DEFAULT_PIN;
+  const place = typeof sp.place === "string" ? sp.place.trim().slice(0, 80) : "";
+  return { lat, lng, label: place || `${lat.toFixed(4)}, ${lng.toFixed(4)}` };
+}
 
 export default async function BookPage({ params, searchParams }: PageProps<"/book/[slug]">) {
   await connection();
@@ -30,6 +48,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/boo
     throw e;
   }
   const { provider, pkg, addons, saait } = priced;
+  const pin = venuePin(sp);
   const day = bsDayMonth(q.date);
   const who = provider.kind === "studio" ? "the studio" : "the provider";
 
@@ -67,6 +86,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/boo
           peakSurcharge={saait ? pkg.peakSurcharge : 0}
           depositPercent={pkg.depositPercent}
           addons={addons.map((a) => ({ id: a.id, name: a.name, price: a.price }))}
+          pin={pin}
           refundLine={`Full refund if you cancel before ${bsDayMonth(fullRefundBefore(q.date))}. If ${who} cancels, we send a verified replacement or refund everything. Deposit is released to ${who} only after you confirm delivery.`}
         />
       </div>

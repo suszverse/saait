@@ -27,6 +27,8 @@ export function BookingForm(props: {
   peakSurcharge: number;
   depositPercent: number;
   addons: Addon[];
+  /** The search point, kept as the venue pin. Only this pin is stored. */
+  pin: { lat: number; lng: number; label: string };
   refundLine: string;
 }) {
   const [state, action, pending] = useActionState(checkoutAction, {} as CheckoutState);
@@ -44,12 +46,15 @@ export function BookingForm(props: {
   );
   const who = props.providerKind === "studio" ? "the studio" : "the provider";
   const methodLabel = METHODS.find((m) => m.id === method)!.label;
+  const pinError = state.field === "venueLat" || state.field === "venueLng" ? state.error : undefined;
 
   return (
     <form action={action} className="flex flex-1 flex-col">
       <input type="hidden" name="providerSlug" value={props.providerSlug} />
       <input type="hidden" name="packageId" value={props.packageId} />
       <input type="hidden" name="date" value={props.date} />
+      <input type="hidden" name="venueLat" value={props.pin.lat} />
+      <input type="hidden" name="venueLng" value={props.pin.lng} />
 
       <div className="flex flex-col gap-4">
         <TextField
@@ -61,6 +66,17 @@ export function BookingForm(props: {
           required
           error={state.field === "venue" ? state.error : undefined}
         />
+        <p className="-mt-2 text-meta text-stone">
+          Venue near {props.pin.label}. We keep only this pin, not the exact address.
+          {pinError && (
+            <>
+              {" "}
+              <span role="alert" className="text-sindoor">
+                {pinError}
+              </span>
+            </>
+          )}
+        </p>
 
         {props.addons.length > 0 && (
           <fieldset className="flex flex-col gap-2">
@@ -142,7 +158,7 @@ export function BookingForm(props: {
       </div>
 
       <div className="sticky bottom-0 mt-auto flex flex-col gap-2.5 border-t border-line bg-white pt-3 pb-7 md:static md:mt-6 md:border-0">
-        {state.error && state.field !== "venue" && (
+        {state.error && !state.field && (
           <p role="alert" className="text-meta text-sindoor">
             {state.error}
           </p>
