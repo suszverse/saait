@@ -18,6 +18,7 @@ import { and, desc, eq, gt, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as s from "../db/schema";
 import { audit } from "../audit";
+import { onReportConfirmed } from "../rewards/earn";
 
 type Db = PostgresJsDatabase<typeof s>;
 type Operator = { id: string; role: string };
@@ -191,6 +192,52 @@ export async function confirm(db: Db, operator: Operator, messageId: string, now
       subjectType: "message",
       subjectId: m.id,
       detail: { senderId: m.senderId, threadId: m.threadId, layer: m.heldLayer, appealed: m.appealedAt != null },
+    });
+  });
+}
+
+/**
+ * A report against a provider is upheld. The row is closed as 'confirmed'
+ * and the reporter earns Rs 200 credit (proposal section 7); the earn event
+ * is keyed on the report, so a replay adds nothing.
+ */
+export async function confirmReport(db: Db, operator: Operator, reportId: string, now: Date = new Date()) {
+  assertOperator(operator);
+  return db.transaction(async (tx) => {
+    const [r] = await tx.select().from(s.reports).where(eq(s.reports.id, reportId)).for("update");
+    if (!r) throw new ModerationError("not_found", "Report not found");
+    if (r.status !== "open") throw new ModerationError("wrong_state", "This report has already been decided.");
+
+    await tx.update(s.reports).set({ status: "confirmed", decidedById: operator.id, decidedAt: now }).where(eq(s.reports.id, r.id));
+    const reward = await onReportConfirmed(tx, r.id, now);
+
+    await audit(tx, {
+      actorId: operator.id,
+      action: "report.confirmed",
+      subjectType: "report",
+      subjectId: r.id,
+      detail: { reporterId: r.reporterId, subjectProviderId: r.subjectProviderId, threadId: r.threadId, credit: reward.credit },
+    });
+    return reward;
+  });
+}
+
+/** The report does not stand. Closed as 'dismissed'; nobody earns anything. */
+export async function dismissReport(db: Db, operator: Operator, reportId: string, now: Date = new Date()) {
+  assertOperator(operator);
+  return db.transaction(async (tx) => {
+    const [r] = await tx.select().from(s.reports).where(eq(s.reports.id, reportId)).for("update");
+    if (!r) throw new ModerationError("not_found", "Report not found");
+    if (r.status !== "open") throw new ModerationError("wrong_state", "This report has already been decided.");
+
+    await tx.update(s.reports).set({ status: "dismissed", decidedById: operator.id, decidedAt: now }).where(eq(s.reports.id, r.id));
+
+    await audit(tx, {
+      actorId: operator.id,
+      action: "report.dismissed",
+      subjectType: "report",
+      subjectId: r.id,
+      detail: { reporterId: r.reporterId, subjectProviderId: r.subjectProviderId, threadId: r.threadId },
     });
   });
 }
