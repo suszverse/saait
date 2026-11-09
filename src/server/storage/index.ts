@@ -27,3 +27,28 @@ export function sniffType(bytes: Uint8Array): (typeof ALLOWED_DOCUMENT_TYPES)[nu
   if (b.length >= 5 && String.fromCharCode(...b.slice(0, 5)) === "%PDF-") return "application/pdf";
   return null;
 }
+
+/** Portfolio uploads: photos the QR screener can decode plus the two clip containers phones export. */
+export const PORTFOLIO_TYPES = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/quicktime"] as const;
+export type PortfolioType = (typeof PORTFOLIO_TYPES)[number];
+
+/** Major brands an MP4 exported by a phone or editor carries in its ftyp box. QuickTime uses `qt  `. */
+const MP4_BRANDS = /^(isom|iso2|iso[3-6]|mp41|mp42|mp71|avc1|hvc1|dash|M4V |M4A |3gp[4-7]|f4v )$/;
+
+/**
+ * Same magic-byte sniffing as sniffType, for the portfolio's narrower list.
+ * HEIC and PDF are not portfolio media; MP4 and MOV both start with an ftyp
+ * box whose brand tells them apart.
+ */
+export function sniffPortfolioType(bytes: Uint8Array): PortfolioType | null {
+  const image = sniffType(bytes);
+  if (image === "image/jpeg" || image === "image/png" || image === "image/webp") return image;
+  if (image) return null;
+  const b = bytes;
+  if (b.length >= 12 && String.fromCharCode(...b.slice(4, 8)) === "ftyp") {
+    const brand = String.fromCharCode(...b.slice(8, 12));
+    if (brand === "qt  ") return "video/quicktime";
+    if (MP4_BRANDS.test(brand)) return "video/mp4";
+  }
+  return null;
+}
