@@ -186,3 +186,39 @@ export async function listPortfolio(db: Db, providerProfileId: string, viewer?: 
     .where(and(eq(s.portfolioItems.providerId, providerProfileId), seesAll ? undefined : eq(s.portfolioItems.status, "approved")))
     .orderBy(asc(s.portfolioItems.position), asc(s.portfolioItems.createdAt));
 }
+
+/** Operator queue: every pending item across providers, oldest first. */
+export async function listPendingPortfolio(db: Db, operator: Actor) {
+  if (!isOperator(operator)) throw new PortfolioError("forbidden", "Only the review team can see this.");
+  return db
+    .select({
+      id: s.portfolioItems.id,
+      mediaKind: s.portfolioItems.mediaKind,
+      bytes: s.portfolioItems.bytes,
+      durationSeconds: s.portfolioItems.durationSeconds,
+      createdAt: s.portfolioItems.createdAt,
+      providerId: s.providerProfiles.id,
+      providerName: s.providerProfiles.displayName,
+      providerKind: s.providerProfiles.kind,
+    })
+    .from(s.portfolioItems)
+    .innerJoin(s.providerProfiles, eq(s.providerProfiles.id, s.portfolioItems.providerId))
+    .where(eq(s.portfolioItems.status, "pending"))
+    .orderBy(asc(s.portfolioItems.createdAt));
+}
+
+/** Sidebar badge: how many items wait for review. */
+export async function countPendingPortfolio(db: Db): Promise<number> {
+  const rows = await db.select({ id: s.portfolioItems.id }).from(s.portfolioItems).where(eq(s.portfolioItems.status, "pending"));
+  return rows.length;
+}
+
+/** One item with its owner, for the media route. Null when it does not exist. */
+export async function readItem(db: Db, itemId: string) {
+  const [row] = await db
+    .select({ url: s.portfolioItems.url, storageKey: s.portfolioItems.storageKey, status: s.portfolioItems.status, ownerId: s.providerProfiles.userId })
+    .from(s.portfolioItems)
+    .innerJoin(s.providerProfiles, eq(s.providerProfiles.id, s.portfolioItems.providerId))
+    .where(eq(s.portfolioItems.id, itemId));
+  return row ?? null;
+}
