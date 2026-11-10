@@ -1,17 +1,29 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./helpers";
+import { db, signIn } from "./helpers";
 
 const DATE = "2027-02-24"; // Falgun 12, 2083, a wedding date in the seed
 
 // The suite runs on a phone and on a desktop against one database, so each
 // run reads the slots it starts with instead of assuming a fresh seed.
-test("a client finds a free provider and locks the date with a deposit", async ({ page }) => {
-  await page.goto(`/?city=butwal&date=${DATE}&category=wedding-photo`);
-  await expect(page.getByText("Falgun 12 is a wedding date.")).toBeVisible();
+test("a client picks a place, finds a free business and locks the date with a deposit", async ({ page }) => {
+  // With no point chosen, the search starts from Traffic Chowk.
+  await page.goto(`/?date=${DATE}&category=wedding-photo`);
+  await expect(page.getByText("Shooting near")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Traffic Chowk/ })).toBeVisible();
+  await expect(page.getByText("Falgun 12 is a wedding date.", { exact: false })).toBeVisible();
+
+  // Any nearby place chip moves the search point into the URL.
+  const chip = page.getByRole("navigation", { name: "Search area" }).locator("a:not([aria-current])").first();
+  const place = (await chip.textContent())!.split(" ·")[0].trim();
+  await chip.click();
+  await expect(page).toHaveURL(/[?&]lat=[\d.]+&lng=[\d.]+/);
+  await expect(page.getByRole("button", { name: place })).toBeVisible();
 
   await page.getByRole("link", { name: /^See all/ }).click();
+  await expect(page).toHaveURL(/\/results\?.*lat=/);
   await expect(page.getByRole("heading", { name: "Wedding photo, Falgun 12" })).toBeVisible();
   await expect(page.getByText("sorted by rating")).toBeVisible();
+  await expect(page.getByText(/km away/).first()).toBeVisible();
 
   await page.getByRole("link", { name: /Shrestha Studio/ }).first().click();
   await expect(page.getByRole("heading", { name: "Shrestha Studio" })).toBeVisible();
@@ -40,7 +52,12 @@ test("a client finds a free provider and locks the date with a deposit", async (
   await expect(page.locator("dl div", { hasText: "Deposit held by Saait" })).toContainText("Rs 18,250");
   await expect(page.getByText("Locked", { exact: true })).toBeVisible();
 
+  // Only the venue pin is kept, and it is kept.
+  const [row] = await db()`select venue_lat, venue_lng from bookings where code = ${code}`;
+  expect(row.venue_lat).not.toBeNull();
+  expect(row.venue_lng).not.toBeNull();
+
   // The slot is taken.
-  await page.goto(`/p/shrestha-studio?city=butwal&date=${DATE}&category=wedding-photo`);
+  await page.goto(`/p/shrestha-studio?date=${DATE}&category=wedding-photo`);
   await expect(page.getByText(before - 1 > 0 ? `Free on Falgun 12 · ${before - 1} of 3 slots left` : "Not free on Falgun 12")).toBeVisible();
 });
