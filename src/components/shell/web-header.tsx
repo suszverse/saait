@@ -30,6 +30,7 @@ const NAV: Record<Role, Item[]> = {
   freelancer: [
     { label: "Today", href: "/crew" },
     { label: "Jobs", href: "/crew/jobs" },
+    { label: "Profile", href: "/crew/profile" },
     { label: "Messages", href: "/chat" },
     { label: "Rewards", href: "/rewards" },
   ],

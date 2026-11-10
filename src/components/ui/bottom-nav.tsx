@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { SVGProps } from "react";
-import { CalendarIcon, HomeIcon, LockIcon, PackageIcon, SearchIcon, UserIcon } from "./icons";
+import { CalendarIcon, HomeIcon, LockIcon, PackageIcon, SearchIcon, ShieldIcon, UserIcon } from "./icons";
 
 type NavIconProps = Omit<SVGProps<SVGSVGElement>, "children"> & { size?: number };
 
@@ -38,12 +38,14 @@ const NAVS = {
     { key: "today", label: "Today", href: "/business", Icon: HomeIcon },
     { key: "crew", label: "Crew", href: "/business/crew", Icon: UserIcon },
     { key: "profile", label: "Profile", href: "/business/profile", Icon: PackageIcon },
+    { key: "reviews", label: "Reviews", href: "/business/reviews", Icon: ShieldIcon },
     { key: "messages", label: "Messages", href: "/chat", Icon: ChatIcon },
     { key: "rewards", label: "Rewards", href: "/rewards", Icon: GiftIcon },
   ],
   crew: [
     { key: "today", label: "Today", href: "/crew", Icon: HomeIcon },
     { key: "jobs", label: "Jobs", href: "/crew/jobs", Icon: CalendarIcon },
+    { key: "profile", label: "Profile", href: "/crew/profile", Icon: UserIcon },
     { key: "messages", label: "Messages", href: "/chat", Icon: ChatIcon },
     { key: "rewards", label: "Rewards", href: "/rewards", Icon: GiftIcon },
   ],
