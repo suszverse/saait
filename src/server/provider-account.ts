@@ -239,3 +239,33 @@ export async function updateBusinessProfile(db: Db, userId: string, raw: unknown
   if (updated.length === 0) throw new Error("No business profile for this account");
   return v;
 }
+
+/** What a freelancer can edit on their private crew profile. Rupees as typed; stored as paisa. */
+export const crewProfileInput = z.object({
+  headline: z.string({ error: "Write one line about your work." }).trim().min(3, "Write one line about your work.").max(120, "Keep your headline under 120 characters."),
+  roles: z.array(z.enum(CREW_ROLES, { error: "Pick roles from the list." })).min(1, "Pick at least one role.").max(6, "Pick up to six roles."),
+  dayRate: z.coerce
+    .number({ error: "Enter your day rate in rupees." })
+    .int("Enter your day rate in whole rupees.")
+    .min(1_000, "Day rate is between Rs 1,000 and Rs 1,00,000.")
+    .max(100_000, "Day rate is between Rs 1,000 and Rs 1,00,000."),
+  bio: z.string().trim().max(600, "Keep your bio under 600 characters."),
+});
+
+/**
+ * Updates the caller's own freelancer profile only; the user id, never a
+ * profile id, picks the row. The private-profile check runs first and fails as
+ * a ZodError on the field it names, so the form can show the plain reason.
+ */
+export async function updateCrewProfile(db: Db, userId: string, raw: unknown) {
+  const v = crewProfileInput.parse(raw);
+  const check = checkPrivateProfile({ headline: v.headline, bio: v.bio, roles: v.roles });
+  if (!check.ok) throw new z.ZodError([{ code: "custom", path: [check.field], message: check.reason, input: v[check.field] }]);
+  const updated = await db
+    .update(s.providerProfiles)
+    .set({ crewHeadline: v.headline, crewRoles: [...v.roles], dayRate: v.dayRate * 100, bio: v.bio || null })
+    .where(and(eq(s.providerProfiles.userId, userId), eq(s.providerProfiles.kind, "freelancer")))
+    .returning({ id: s.providerProfiles.id });
+  if (updated.length === 0) throw new Error("No crew profile for this account");
+  return v;
+}
