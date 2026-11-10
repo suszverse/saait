@@ -21,10 +21,13 @@ export async function latestOtp(phone: string, since: Date): Promise<string> {
   throw new Error(`no OTP for ${phone}`);
 }
 
-/** Signs in from the current login page and waits for the redirect. */
+/** Signs in from the current login page and waits for the redirect. Not a test of the OTP rate limit. */
 export async function signIn(page: Page, local: string) {
   await expect(page).toHaveURL(/\/login/);
   await page.getByLabel("Mobile number").fill(local);
+  // Seeded numbers sign in from several specs in one run; age their earlier codes out of
+  // the three-per-15-minutes window so the limit is not what a journey tests.
+  await db()`update otp_codes set created_at = created_at - interval '1 hour' where phone = ${`+977${local}`}`;
   const since = new Date(Date.now() - 1000);
   await page.getByRole("button", { name: "Send code" }).click();
   await expect(page.getByLabel("6-digit code")).toBeVisible();
@@ -38,4 +41,15 @@ export async function signIn(page: Page, local: string) {
 export function jpeg(): Buffer {
   const head = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00]);
   return Buffer.concat([head, Buffer.alloc(256, 7), Buffer.from([0xff, 0xd9])]);
+}
+
+let phoneSeq = 0;
+/**
+ * A local mobile number no other run or project has used: 986, six digits of
+ * the clock, then a per-process counter. The e2e database is rebuilt every
+ * run, so this only has to be unique within one.
+ */
+export function newPhone(): string {
+  phoneSeq = (phoneSeq + 1) % 10;
+  return `986${String(Date.now() % 1_000_000).padStart(6, "0")}${phoneSeq}`;
 }
