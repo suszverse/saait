@@ -153,6 +153,33 @@
   --check-border: #4a4758;
 }
 
+/* No explicit choice yet (before the inline script runs, or after a refresh in
+   System mode): follow the device. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ink: #f3f1ec;
+    --stone: #a6a2b0;
+    --line: #2e2c3a;
+    --ground: #141320;
+    --on-accent: #141320;
+    --tint: #1e1c2a;
+    --sindoor: #e0394a;
+    --sindoor-tint: #351418;
+    --sindoor-hover: #e85565;
+    --marigold: #f2b13d;
+    --marigold-text: #f5c96b;
+    --marigold-tint: #2e2410;
+    --marigold-line: #4d3b12;
+    --marigold-hover: #f5bf5c;
+    --teal: #3fb8ac;
+    --teal-tint: #10302c;
+    --disabled-text: #6e6b7a;
+    --check-border: #4a4758;
+  }
+}
+
 /* Base styles live in the base layer so utilities always win over them. */
 @layer base {
   html {

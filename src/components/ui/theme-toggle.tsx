@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useId, useState, useSyncExternalStore, useTransition } from "react";
 import { saveTheme } from "@/app/settings/actions";
 import { THEME_COOKIE, type Theme, themeSchema } from "@/lib/theme";
 
@@ -48,6 +48,13 @@ export function ThemeToggle({ value, compact = false, signedIn = false, classNam
   const [status, setStatus] = useState<string | null>(null);
   const [, start] = useTransition();
   const name = useId();
+  // False during SSR and hydration, true after: keeps the first client render
+  // identical to the server's so React does not discard the html attributes.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   function choose(next: Theme) {
     if (!themeSchema.safeParse(next).success || next === theme) return;
@@ -57,13 +64,16 @@ export function ThemeToggle({ value, compact = false, signedIn = false, classNam
     start(async () => {
       const r = await saveTheme(next);
       setStatus("ok" in r ? "Saved to your account." : r.error);
+      // The server refresh re-renders <html> from the cookie, which carries
+      // nothing for System; put the resolved theme back.
+      applyLocally(next);
     });
   }
 
   if (compact) {
     const next = ORDER[(ORDER.indexOf(theme) + 1) % ORDER.length];
     const label = OPTIONS.find((o) => o.value === theme)!.label;
-    const dark = typeof window !== "undefined" ? resolve(theme) === "dark" : theme === "dark";
+    const dark = mounted ? resolve(theme) === "dark" : theme === "dark";
     return (
       <button
         type="button"
