@@ -209,3 +209,33 @@ export async function providerToday(providerId: string, capacity: number) {
     dates: saait.map((d) => ({ day: d.day, left: Math.max(0, capacity - (count.get(d.day) ?? 0)) })),
   };
 }
+
+/** What a business can edit about itself after onboarding. Year is checked against today, not a build-time constant. */
+export function businessProfileInput(now: Date = new Date()) {
+  const year = now.getFullYear();
+  return z.object({
+    businessName: z.string({ error: "Enter your business name." }).trim().min(2, "Enter your business name.").max(80, "Keep the name under 80 characters."),
+    bio: z
+      .string()
+      .trim()
+      .max(600, "Keep your bio under 600 characters.")
+      .transform((v) => (v === "" ? null : v)),
+    sinceYear: z.coerce
+      .number({ error: "Enter the year you started." })
+      .int("Enter the year you started.")
+      .min(1980, `Enter a year between 1980 and ${year}.`)
+      .max(year, `Enter a year between 1980 and ${year}.`),
+  });
+}
+
+/** Updates the caller's own studio profile only; the user id, never a profile id, picks the row. */
+export async function updateBusinessProfile(db: Db, userId: string, raw: unknown) {
+  const v = businessProfileInput().parse(raw);
+  const updated = await db
+    .update(s.providerProfiles)
+    .set({ businessName: v.businessName, bio: v.bio, sinceYear: v.sinceYear })
+    .where(and(eq(s.providerProfiles.userId, userId), eq(s.providerProfiles.kind, "studio")))
+    .returning({ id: s.providerProfiles.id });
+  if (updated.length === 0) throw new Error("No business profile for this account");
+  return v;
+}
