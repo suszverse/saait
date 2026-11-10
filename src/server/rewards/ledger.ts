@@ -106,7 +106,7 @@ export async function creditBalance(db: Db, userId: string, now: Date = new Date
     .select({ amount: s.rewardLedger.amount, reason: s.rewardLedger.reason, expiresAt: s.rewardLedger.expiresAt, createdAt: s.rewardLedger.createdAt })
     .from(s.rewardLedger)
     .where(and(eq(s.rewardLedger.userId, userId), eq(s.rewardLedger.kind, "credit"), ne(s.rewardLedger.reason, "expiry")))
-    .orderBy(s.rewardLedger.createdAt, s.rewardLedger.id);
+    .orderBy(s.rewardLedger.createdAt, sql`case when ${s.rewardLedger.amount} > 0 then 0 else 1 end`, s.rewardLedger.id);
   const buckets: { left: number; expiresAt: Date | null }[] = [];
   for (const row of rows) {
     if (row.amount > 0) {

@@ -6,7 +6,7 @@ import { ChevronLeftIcon, SaaitDot } from "@/components/ui";
 import { fullRefundBefore } from "@/lib/fees";
 import { bsDayMonth, bsLongWithGregorian, type IsoDate } from "@/lib/nepali-date";
 import { requireUser } from "@/server/auth/guards";
-import { BookingError, NEPAL_BOUNDS, priceCheckout } from "@/server/bookings";
+import { BookingError, NEPAL_BOUNDS, creditAvailableFor, priceCheckout } from "@/server/bookings";
 import { queryString, parseClientQuery } from "@/server/client/query";
 import { db } from "@/server/db";
 import { BookingForm } from "./booking-form";
@@ -38,11 +38,12 @@ export default async function BookPage({ params, searchParams }: PageProps<"/boo
   const packageId = typeof sp.package === "string" ? sp.package : "";
   const back = `/p/${slug}?${queryString(q)}`;
   if (!/^[0-9a-f-]{36}$/.test(packageId)) redirect(back);
-  await requireUser(`/book/${slug}?${queryString(q)}&package=${packageId}`);
+  const user = await requireUser(`/book/${slug}?${queryString(q)}&package=${packageId}`);
+  const creditAvailable = await creditAvailableFor(db(), user.id);
 
   let priced;
   try {
-    priced = await priceCheckout(db(), { providerSlug: slug, packageId, date: q.date as IsoDate, addonIds: [] });
+    priced = await priceCheckout(db(), { providerSlug: slug, packageId, date: q.date as IsoDate, addonIds: [], creditAvailable });
   } catch (e) {
     if (e instanceof BookingError) notFound();
     throw e;
@@ -85,6 +86,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/boo
           packagePrice={pkg.price}
           peakSurcharge={saait ? pkg.peakSurcharge : 0}
           depositPercent={pkg.depositPercent}
+          creditAvailable={creditAvailable}
           addons={addons.map((a) => ({ id: a.id, name: a.name, price: a.price }))}
           pin={pin}
           refundLine={`Full refund if you cancel before ${bsDayMonth(fullRefundBefore(q.date))}. If ${who} cancels, we send a verified replacement or refund everything. Deposit is released to ${who} only after you confirm delivery.`}

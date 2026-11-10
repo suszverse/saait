@@ -5,12 +5,15 @@
  *    per-provider-per-day advisory lock so two clients cannot take the last
  *    slot at the same moment.
  * 2. Only the deposit plus the booking fee is charged through the platform;
- *    the balance is paid client to provider directly.
+ *    the balance is paid client to provider directly. Reward credit the
+ *    client holds comes off the fee (never the deposit), up to what is left
+ *    of this Nepal month's credit budget, and is spent in the same
+ *    transaction that places the hold.
  * 3. A verified payment confirms the booking exactly once, converts the
  *    hold, and sends SMS to both sides.
  */
 import { randomInt } from "node:crypto";
-import { and, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, gt, gte, inArray, isNotNull, lt, lte, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { z } from "zod";
 import * as s from "./db/schema";
@@ -18,10 +21,11 @@ import { isClientVisible, slotsLeft } from "./providers";
 import type { SmsSender } from "./sms";
 import type { PaymentGateway, PaymentMethod } from "./payments";
 import { PAYMENT_METHODS } from "./payments";
-import { DEFAULT_CANCELLATION_POLICY, quote, vatInsideFee } from "@/lib/fees";
-import { formatRs, paisa } from "@/lib/money";
-import { bsDayMonth, daysBetween, gregorianShort, isIsoDate, todayInNepal, type IsoDate } from "@/lib/nepali-date";
+import { DEFAULT_CANCELLATION_POLICY, creditBudgetLeft, quote, vatInsideFee } from "@/lib/fees";
+import { formatRs, paisa, type Paisa } from "@/lib/money";
+import { addDays, bsDayMonth, daysBetween, fromBs, gregorianShort, isIsoDate, toBs, todayInNepal, type IsoDate } from "@/lib/nepali-date";
 import { onBookingCompleted } from "./rewards/earn";
+import { creditBalance, post } from "./rewards/ledger";
 
 type Db = PostgresJsDatabase<typeof s>;
 export type BookingDeps = { db: Db; sms: SmsSender; gateway: PaymentGateway; now?: () => Date };
@@ -66,8 +70,62 @@ async function newCode(db: Db): Promise<string> {
   return `SA-${randomInt(10000, 100000)}`;
 }
 
+/** The Nepal calendar month containing `now`, as a half-open instant range. */
+function nepalMonth(now: Date): { from: Date; to: Date } {
+  const bs = toBs(todayInNepal(now));
+  const first = fromBs({ year: bs.year, month: bs.month, day: 1 });
+  // BS months run 29 to 32 days, so day 1 + 32 always lands in the next month.
+  const nextFirst = fromBs({ ...toBs(addDays(first, 32)), day: 1 });
+  return { from: new Date(`${first}T00:00:00+05:45`), to: new Date(`${nextFirst}T00:00:00+05:45`) };
+}
+
+/**
+ * Credit the client may spend on a booking fee right now: their balance,
+ * capped by what is left of this Nepal month's credit budget. Fee revenue is
+ * the booking fee of every booking created this month that reached
+ * confirmed (a later cancellation does not refund the fee); credit redeemed
+ * is the net of this month's checkout_spend rows, so returned credit frees
+ * budget again.
+ */
+export async function creditAvailableFor(db: Db, clientId: string, now = new Date()): Promise<Paisa> {
+  const balance = await creditBalance(db, clientId, now);
+  if (balance === 0) return paisa(0);
+  const { from, to } = nepalMonth(now);
+  const [rev] = await db
+    .select({ total: sql<number>`coalesce(sum(${s.bookings.bookingFee}), 0)::bigint` })
+    .from(s.bookings)
+    .where(and(gte(s.bookings.createdAt, from), lt(s.bookings.createdAt, to), isNotNull(s.bookings.confirmedAt)));
+  const [spent] = await db
+    .select({ total: sql<number>`coalesce(sum(${s.rewardLedger.amount}), 0)::bigint` })
+    .from(s.rewardLedger)
+    .where(
+      and(eq(s.rewardLedger.kind, "credit"), eq(s.rewardLedger.reason, "checkout_spend"), gte(s.rewardLedger.createdAt, from), lt(s.rewardLedger.createdAt, to)),
+    );
+  const budget = creditBudgetLeft(paisa(Number(rev?.total ?? 0)), paisa(Math.max(0, -Number(spent?.total ?? 0))));
+  return paisa(Math.min(balance, budget));
+}
+
+/**
+ * Gives back the credit a booking spent at checkout, once. The ledger is
+ * append-only and checkout_spend is a recurring reason (outside the
+ * once-per-source index), so the return is a positive checkout_spend row for
+ * the same booking: creditBalance replays it as a fresh grant, and the
+ * month's redeemed total nets it out. An `expiry` row would not work, since
+ * creditBalance ignores those. Callers hold the booking row lock, and the
+ * existing-row check makes a second call a no-op.
+ */
+async function returnCredit(db: Db, b: { id: string; clientId: string; creditApplied: number }, now: Date) {
+  if (b.creditApplied <= 0) return;
+  const [done] = await db
+    .select({ id: s.rewardLedger.id })
+    .from(s.rewardLedger)
+    .where(and(eq(s.rewardLedger.bookingId, b.id), eq(s.rewardLedger.kind, "credit"), eq(s.rewardLedger.reason, "checkout_spend"), gt(s.rewardLedger.amount, 0)));
+  if (done) return;
+  await post(db, { userId: b.clientId, kind: "credit", amount: b.creditApplied, reason: "checkout_spend", bookingId: b.id }, now);
+}
+
 /** Everything the Lock the date screen shows, computed on the server. */
-export async function priceCheckout(db: Db, input: { providerSlug: string; packageId: string; date: IsoDate; addonIds: string[] }) {
+export async function priceCheckout(db: Db, input: { providerSlug: string; packageId: string; date: IsoDate; addonIds: string[]; creditAvailable?: Paisa }) {
   const [row] = await db
     .select({ p: s.providerProfiles, pkg: s.packages })
     .from(s.packages)
@@ -86,6 +144,7 @@ export async function priceCheckout(db: Db, input: { providerSlug: string; packa
     peakSurcharge: paisa(saaitRow ? row.pkg.peakSurcharge : 0),
     addons: chosen.map((a) => paisa(a.price)),
     depositPercent: row.pkg.depositPercent,
+    creditAvailable: input.creditAvailable,
   });
   return { provider: row.p, pkg: row.pkg, addons, chosen, saait: !!saaitRow, quote: q };
 }
@@ -95,13 +154,19 @@ export async function checkout(deps: BookingDeps, client: { id: string; phone: s
   const now = deps.now?.() ?? new Date();
   const today = todayInNepal(now);
   if (input.date < today) throw new BookingError("past_date", "That date has passed. Pick another.");
-  const priced = await priceCheckout(deps.db, { ...input, date: input.date as IsoDate });
-  const { provider, pkg, chosen, quote: q } = priced;
+  const { provider } = await priceCheckout(deps.db, { ...input, date: input.date as IsoDate });
   const urgency = daysBetween(today, input.date as IsoDate) < URGENT_WINDOW_DAYS ? "urgent" : "standard";
+  const holdsCredit = (await creditBalance(deps.db, client.id, now)) > 0;
 
   const result = await deps.db.transaction(async (tx) => {
     // Serialise checkouts for this provider and day; released at commit.
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`${provider.id}:${input.date}`}))`);
+    // Spending credit is serialised platform-wide so the balance and the
+    // month's budget are read and spent atomically. Taken after the day lock,
+    // always in this order, so two checkouts cannot deadlock.
+    if (holdsCredit) await tx.execute(sql`select pg_advisory_xact_lock(hashtext('saait:credit'))`);
+    const creditAvailable = holdsCredit ? await creditAvailableFor(tx as unknown as Db, client.id, now) : paisa(0);
+    const { pkg, chosen, quote: q } = await priceCheckout(tx as unknown as Db, { ...input, date: input.date as IsoDate, creditAvailable });
     const left = (await slotsLeft(tx as unknown as Db, [provider.id], input.date as IsoDate, now)).get(provider.id) ?? 0;
     if (left <= 0) throw new BookingError("date_taken", `${provider.displayName} is no longer free on ${bsDayMonth(input.date)}. Pick another date or provider.`);
     const [hold] = await tx
@@ -132,12 +197,18 @@ export async function checkout(deps: BookingDeps, client: { id: string; phone: s
         agreedTotal: q.agreedTotal,
         depositAmount: q.deposit,
         bookingFee: q.bookingFee,
-        bookingFeeVat: vatInsideFee(q.bookingFee).vat,
+        // VAT is on what the client actually pays; credit is not a taxable sale.
+        bookingFeeVat: vatInsideFee(q.feePayable).vat,
+        creditApplied: q.creditApplied,
         urgentSurcharge: q.urgentSurcharge,
         balanceDue: q.balance,
         cancellationPolicy: [...DEFAULT_CANCELLATION_POLICY],
+        createdAt: now,
       })
       .returning();
+    if (q.creditApplied > 0) {
+      await post(tx as unknown as Db, { userId: client.id, kind: "credit", amount: -q.creditApplied, reason: "checkout_spend", bookingId: booking.id }, now);
+    }
     const [payment] = await tx
       .insert(s.payments)
       .values({ bookingId: booking.id, gateway: deps.gateway.name, method: input.method, gatewayRef: `pending-${booking.id}`, amount: q.payNow })
@@ -158,7 +229,11 @@ export async function checkout(deps: BookingDeps, client: { id: string; phone: s
 /**
  * Idempotent: a webhook delivered twice confirms once. An amount that does
  * not match the payment row is refused, as is a payment for a booking whose
- * hold has expired.
+ * hold has expired. A failed payment ends the hold: the booking is
+ * cancelled, the slot returns to the calendar and any credit spent at
+ * checkout goes back to the client, so a later success for the same payment
+ * is refused as hold_expired rather than confirming a booking whose credit
+ * was already returned.
  */
 export async function confirmPayment(deps: BookingDeps, gatewayRef: string, amount: number, status: "succeeded" | "failed") {
   const now = deps.now?.() ?? new Date();
@@ -173,6 +248,12 @@ export async function confirmPayment(deps: BookingDeps, gatewayRef: string, amou
     if (pay.amount !== amount) return { ok: false as const, reason: "amount_mismatch" };
     if (status === "failed") {
       await tx.update(s.payments).set({ status: "failed" }).where(eq(s.payments.id, pay.id));
+      const [held] = await tx.select().from(s.bookings).where(eq(s.bookings.id, pay.bookingId)).for("update");
+      if (held?.status === "held") {
+        await tx.update(s.bookings).set({ status: "cancelled", cancelledAt: now }).where(eq(s.bookings.id, held.id));
+        if (held.holdId) await tx.update(s.dateHolds).set({ status: "released" }).where(and(eq(s.dateHolds.id, held.holdId), eq(s.dateHolds.status, "active")));
+        await returnCredit(tx as unknown as Db, held, now);
+      }
       return { ok: false as const, reason: "failed" };
     }
     const [b] = await tx.select().from(s.bookings).where(eq(s.bookings.id, pay.bookingId)).for("update");
@@ -278,20 +359,28 @@ async function confirmationTexts(db: Db, bookingId: string) {
   ];
 }
 
-/** Expire stale holds so their slots return to the calendar. Safe to run often. */
+/**
+ * Expire stale holds so their slots return to the calendar, and give back
+ * any credit their bookings spent. Safe to run often: a hold expires once,
+ * and the credit return is itself once per booking.
+ */
 export async function expireHolds(db: Db, now = new Date()) {
-  const expired = await db
-    .update(s.dateHolds)
-    .set({ status: "expired" })
-    .where(and(eq(s.dateHolds.status, "active"), lte(s.dateHolds.expiresAt, now)))
-    .returning({ id: s.dateHolds.id });
-  if (expired.length) {
-    await db
-      .update(s.bookings)
-      .set({ status: "cancelled", cancelledAt: now })
-      .where(and(eq(s.bookings.status, "held"), inArray(s.bookings.holdId, expired.map((h) => h.id))));
-  }
-  return expired.length;
+  return db.transaction(async (tx) => {
+    const expired = await tx
+      .update(s.dateHolds)
+      .set({ status: "expired" })
+      .where(and(eq(s.dateHolds.status, "active"), lte(s.dateHolds.expiresAt, now)))
+      .returning({ id: s.dateHolds.id });
+    if (expired.length) {
+      const cancelled = await tx
+        .update(s.bookings)
+        .set({ status: "cancelled", cancelledAt: now })
+        .where(and(eq(s.bookings.status, "held"), inArray(s.bookings.holdId, expired.map((h) => h.id))))
+        .returning({ id: s.bookings.id, clientId: s.bookings.clientId, creditApplied: s.bookings.creditApplied });
+      for (const b of cancelled) await returnCredit(tx as unknown as Db, b, now);
+    }
+    return expired.length;
+  });
 }
 
 /** Statuses in which the client can say the balance has been handed over. */

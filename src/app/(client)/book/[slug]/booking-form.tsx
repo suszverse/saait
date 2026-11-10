@@ -26,6 +26,8 @@ export function BookingForm(props: {
   packagePrice: number;
   peakSurcharge: number;
   depositPercent: number;
+  /** Credit the server will apply: the client's balance capped by this month's budget. */
+  creditAvailable: number;
   addons: Addon[];
   /** The search point, kept as the venue pin. Only this pin is stored. */
   pin: { lat: number; lng: number; label: string };
@@ -41,6 +43,7 @@ export function BookingForm(props: {
         peakSurcharge: paisa(props.peakSurcharge),
         addons: props.addons.filter((a) => chosen.includes(a.id)).map((a) => paisa(a.price)),
         depositPercent: props.depositPercent,
+        creditAvailable: paisa(props.creditAvailable),
       }),
     [chosen, props],
   );
@@ -148,6 +151,12 @@ export function BookingForm(props: {
             <dt>Booking guarantee fee</dt>
             <dd>{formatRs(q.bookingFee)}</dd>
           </div>
+          {q.creditApplied > 0 && (
+            <div className="flex justify-between gap-2 text-teal">
+              <dt>Saait credit</dt>
+              <dd>−{formatRs(q.creditApplied)}</dd>
+            </div>
+          )}
           <div className="flex justify-between gap-2 border-t border-line pt-2 text-stone">
             <dt>Balance, paid to {who} after the event</dt>
             <dd>{formatRs(q.balance)}</dd>

@@ -3,7 +3,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { fromBs } from "@/lib/nepali-date";
-import { rupees } from "@/lib/money";
+import { vatInsideFee } from "@/lib/fees";
+import { paisa, rupees } from "@/lib/money";
 import * as s from "./db/schema";
 import { seed } from "./db/seed";
 import { BookingError, checkout, confirmBalancePaid, confirmPayment, expireHolds, retryPendingConfirmations, type BookingDeps } from "./bookings";
@@ -11,7 +12,7 @@ import { sign } from "./payments";
 import { manualGateway } from "./payments/manual";
 import { slotsLeft } from "./providers";
 import { BOOKING_POINTS } from "./rewards/earn";
-import { creditBalance, pointsBalance } from "./rewards/ledger";
+import { creditBalance, pointsBalance, post } from "./rewards/ledger";
 import type { SmsSender } from "./sms";
 
 const client = postgres(process.env.DATABASE_URL_TEST ?? "", { max: 5, onnotice: () => {} });
@@ -283,5 +284,83 @@ describe("balance confirmed by the client", () => {
     expect(done.status).toBe("completed");
     expect(done.balancePaidClientConfirmedAt).toEqual(NOW);
     expect(await confirmBalancePaid({ db, now: () => AFTER }, clients[0].id, booking.code)).toEqual({ changed: false });
+  });
+});
+
+describe("Saait credit at checkout", () => {
+  // Falgun 20 onward are not wedding dates: each confirmed Rs 65,000 booking
+  // earns a Rs 2,600 fee, so Rs 650 of credit budget.
+  async function feeRevenue(bookings: number) {
+    for (let i = 0; i < bookings; i++) {
+      const { booking } = await checkout(deps, clients[4], input({ date: fromBs({ year: 2083, month: 11, day: 20 + i }) }));
+      await pay(booking.code);
+    }
+  }
+  // Granted an hour before checkout: ledger rows written at the same instant replay in id order.
+  const grant = (c: { id: string }, amount: number) => post(db, { userId: c.id, kind: "credit", amount, reason: "referral" }, new Date(NOW.getTime() - 3_600_000));
+  const spends = (bookingId: string) =>
+    db.select().from(s.rewardLedger).where(eq(s.rewardLedger.bookingId, bookingId)).then((rows) => rows.filter((r) => r.reason === "checkout_spend"));
+
+  it("takes credit off the fee, leaves the deposit alone and records VAT on what is paid", async () => {
+    await feeRevenue(2);
+    await grant(clients[0], rupees(1_000));
+    const { booking } = await checkout(deps, clients[0], input());
+    expect(booking.depositAmount).toBe(rupees(18_250));
+    expect(booking.bookingFee).toBe(rupees(2_920));
+    expect(booking.creditApplied).toBe(rupees(1_000));
+    expect(booking.bookingFeeVat).toBe(vatInsideFee(paisa(rupees(1_920))).vat);
+    const [p] = await db.select().from(s.payments).where(eq(s.payments.bookingId, booking.id));
+    expect(p.amount).toBe(rupees(18_250 + 1_920));
+    expect((await spends(booking.id)).map((r) => r.amount)).toEqual([-rupees(1_000)]);
+    expect(await creditBalance(db, clients[0].id, NOW)).toBe(0);
+  });
+
+  it("never applies more credit than the fee", async () => {
+    await feeRevenue(5);
+    await grant(clients[0], rupees(5_000));
+    const { booking } = await checkout(deps, clients[0], input());
+    expect(booking.creditApplied).toBe(rupees(2_920));
+    expect(booking.bookingFeeVat).toBe(0);
+    const [p] = await db.select().from(s.payments).where(eq(s.payments.bookingId, booking.id));
+    expect(p.amount).toBe(rupees(18_250));
+    expect(await creditBalance(db, clients[0].id, NOW)).toBe(rupees(2_080));
+  });
+
+  it("caps applied credit at what is left of the month's budget", async () => {
+    await feeRevenue(1);
+    await grant(clients[0], rupees(2_000));
+    const { booking } = await checkout(deps, clients[0], input());
+    expect(booking.creditApplied).toBe(rupees(650));
+    const [p] = await db.select().from(s.payments).where(eq(s.payments.bookingId, booking.id));
+    expect(p.amount).toBe(rupees(18_250 + 2_270));
+    // The budget is now spent, so the next client pays the full fee.
+    await grant(clients[1], rupees(500));
+    const { booking: next } = await checkout(deps, clients[1], input());
+    expect(next.creditApplied).toBe(0);
+  });
+
+  it("returns the credit once when the hold expires", async () => {
+    await feeRevenue(2);
+    await grant(clients[0], rupees(1_000));
+    const { booking } = await checkout(deps, clients[0], input());
+    const later = new Date(NOW.getTime() + 25 * 3_600_000);
+    expect(await expireHolds(db, later)).toBe(1);
+    expect(await expireHolds(db, later)).toBe(0);
+    expect((await spends(booking.id)).map((r) => r.amount).sort((a, b) => a - b)).toEqual([-rupees(1_000), rupees(1_000)]);
+    expect(await creditBalance(db, clients[0].id, later)).toBe(rupees(1_000));
+  });
+
+  it("returns the credit once when the payment fails, and the later expiry adds nothing", async () => {
+    await feeRevenue(2);
+    await grant(clients[0], rupees(1_000));
+    const { booking } = await checkout(deps, clients[0], input());
+    expect(await pay(booking.code, "failed")).toMatchObject({ ok: false, reason: "failed" });
+    expect(await pay(booking.code, "failed")).toMatchObject({ ok: false, reason: "failed" });
+    await expireHolds(db, new Date(NOW.getTime() + 25 * 3_600_000));
+    expect((await spends(booking.id)).filter((r) => r.amount > 0)).toHaveLength(1);
+    expect(await creditBalance(db, clients[0].id, NOW)).toBe(rupees(1_000));
+    expect(await pay(booking.code)).toMatchObject({ ok: false, reason: "hold_expired" });
+    const [b] = await db.select().from(s.bookings).where(eq(s.bookings.id, booking.id));
+    expect(b.status).toBe("cancelled");
   });
 });
