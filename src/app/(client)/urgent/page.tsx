@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { env } from "@/env";
+import { PlacePicker } from "@/components/client/place-picker";
+import { db } from "@/server/db";
+import { nearestPlaces } from "@/server/places";
+import { searchPlace } from "@/server/search";
+import { parseClientQuery, queryString } from "@/server/client/query";
 import { BottomNav, ChevronLeftIcon, ClockIcon, buttonClass } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Urgent request" };
@@ -11,9 +16,13 @@ export const metadata: Metadata = { title: "Urgent request" };
  * ship with the backup pool. Until then urgent requests go to the Saait desk,
  * which places them by hand: the manual fallback for the same flow.
  */
-export default async function UrgentPage() {
+export default async function UrgentPage({ searchParams }: PageProps<"/urgent">) {
   await connection();
-  const wa = `https://wa.me/${env().DESK_WHATSAPP}?text=${encodeURIComponent("Urgent request: I need a photographer within 72 hours.")}`;
+  const q = parseClientQuery(await searchParams);
+  const place = searchPlace(q);
+  const nearby = await nearestPlaces(db(), { lat: q.lat, lng: q.lng }, 4);
+  const baseQuery = queryString({ date: q.date, category: q.category, band: q.band, radiusKm: q.radiusKm });
+  const wa = `https://wa.me/${env().DESK_WHATSAPP}?text=${encodeURIComponent(`Urgent request: I need a photographer within 72 hours. Venue: ${place.label}.`)}`;
   return (
     <>
       <main className="mx-auto flex w-full max-w-form flex-1 flex-col">
@@ -31,6 +40,10 @@ export default async function UrgentPage() {
             <ClockIcon size={20} className="mt-0.5 shrink-0" />
             Tell us the date, time, venue and what you need. We usually reply within 15 minutes between 7 am and 9 pm.
           </p>
+          <section aria-label="Venue" className="flex flex-col gap-2">
+            <p className="text-label font-semibold">Where is the venue?</p>
+            <PlacePicker current={{ label: place.label, lat: place.lat, lng: place.lng }} nearby={nearby} baseQuery={baseQuery} path="/urgent" />
+          </section>
           <a href={wa} target="_blank" rel="noopener noreferrer" className={buttonClass("urgent", "lg", "no-underline")}>
             Message the Saait desk
           </a>

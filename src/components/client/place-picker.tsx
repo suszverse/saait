@@ -19,7 +19,7 @@ const DEBOUNCE_MS = 300;
 
 type Point = { label: string; lat: number; lng: number };
 
-export function PlacePicker({ current, nearby, baseQuery }: { current: Point; nearby: NearbyPlace[]; baseQuery: string }) {
+export function PlacePicker({ current, nearby, baseQuery, path = "/" }: { current: Point; nearby: NearbyPlace[]; baseQuery: string; path?: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [searching, setSearching] = useState(false);
@@ -32,7 +32,7 @@ export function PlacePicker({ current, nearby, baseQuery }: { current: Point; ne
     params.set("lat", p.lat.toFixed(4));
     params.set("lng", p.lng.toFixed(4));
     params.set("place", p.label);
-    return `/?${params.toString()}`;
+    return `${path}?${params.toString()}`;
   };
   const go = (p: Point) => start(() => router.replace(hrefFor(p), { scroll: false }));
 

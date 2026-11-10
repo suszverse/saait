@@ -3,6 +3,11 @@ import type { LevelName } from "@/lib/levels";
 import { CheckIcon } from "./icons";
 import { LevelBadge } from "./level-badge";
 
+/** "1.2 km away"; under a kilometre reads "under 1 km away". */
+export function distanceAway(km: number) {
+  return km < 1 ? "under 1 km away" : `${km.toFixed(1)} km away`;
+}
+
 /**
  * Grid tile: 4:5 portfolio image (grey tone until real portfolios arrive),
  * Verified badge and level badge, name, city and rating, from-price.
@@ -15,6 +20,7 @@ export function ProviderTile({
   tone,
   verified = true,
   level,
+  distanceKm,
 }: {
   href: string;
   name: string;
@@ -23,6 +29,7 @@ export function ProviderTile({
   tone: string;
   verified?: boolean;
   level?: LevelName;
+  distanceKm?: number;
 }) {
   return (
     <Link href={href} className="flex min-w-0 flex-col gap-2 no-underline">
@@ -43,7 +50,7 @@ export function ProviderTile({
       </span>
       <span className="flex flex-col gap-px">
         <span className="text-label font-bold">{name}</span>
-        <span className="text-meta text-stone">{meta}</span>
+        <span className="text-meta text-stone">{distanceKm == null ? meta : [meta, distanceAway(distanceKm)].filter(Boolean).join(" · ")}</span>
         <span className="mt-0.5 text-small font-semibold">{price}</span>
       </span>
     </Link>
