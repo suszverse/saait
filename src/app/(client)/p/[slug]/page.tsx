@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { openThreadAction } from "@/app/chat/[id]/actions";
 import { PackagePicker } from "@/components/client/package-picker";
-import { Button, CheckIcon, ChevronLeftIcon, StatusChip, buttonClass } from "@/components/ui";
+import { Button, CheckIcon, ChevronLeftIcon, StatusChip } from "@/components/ui";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { formatRs, type Paisa } from "@/lib/money";
 import { bsDayMonth, type IsoDate } from "@/lib/nepali-date";
@@ -16,12 +17,6 @@ export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Prom
   await connection();
   const p = await getVerifiedProvider(db(), (await params).slug);
   return { title: p?.displayName ?? "Provider" };
-}
-
-/** Phase 1 has no in-app chat: Message opens WhatsApp with the date and provider, per system plan section 9. */
-function whatsappHref(provider: string, date: string, phone = "9779857000001") {
-  const text = `Hello Saait, I would like to ask ${provider} about ${date}.`;
-  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
 export default async function ProviderPage({ params, searchParams }: PageProps<"/p/[slug]">) {
@@ -57,6 +52,15 @@ export default async function ProviderPage({ params, searchParams }: PageProps<"
         )}
       </div>
 
+      {/*
+        Message opens the in-app conversation for this date. It is its own form
+        (forms cannot nest), and its button sits in the Lock bar through form=.
+        Signed-out visitors are sent to log in and come back here.
+      */}
+      <form id="message-form" action={openThreadAction} hidden>
+        <input type="hidden" name="slug" value={p.slug} />
+        <input type="hidden" name="date" value={q.date} />
+      </form>
       {/* Shows the checked package's price on the Lock button, without JavaScript. */}
       <style>{packages.map((k) => `form:has(input[value="${k.id}"]:checked) [data-lock-price="${k.id}"]{display:inline}`).join("")}</style>
       <form action={`/book/${p.slug}`} method="get" className="flex flex-1 flex-col md:mt-6 md:grid md:grid-cols-[minmax(0,1fr)_400px] md:gap-12">
@@ -118,9 +122,10 @@ export default async function ProviderPage({ params, searchParams }: PageProps<"
         </div>
 
         <div className="sticky bottom-0 mt-5 grid grid-cols-[120px_minmax(0,1fr)] items-center gap-2.5 border-t border-line bg-ground px-gutter pt-3 pb-7 md:static md:mt-0 md:flex md:h-fit md:flex-col md:items-stretch md:rounded-card md:border md:p-5">
-          <a href={whatsappHref(p.displayName, day)} className={buttonClass("secondary", "lg", "no-underline")} target="_blank" rel="noopener noreferrer">
+          <Button type="submit" form="message-form" variant="secondary" className="min-w-0">
             Message
-          </a>
+            <span className="sr-only truncate md:not-sr-only">{" "}{p.displayName}</span>
+          </Button>
           <Button type="submit" disabled={left <= 0}>
             Lock {day}
             {packages.map((k) => (

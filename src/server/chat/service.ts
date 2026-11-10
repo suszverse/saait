@@ -251,3 +251,32 @@ export async function listThread(db: Db, viewer: Viewer, threadId: string): Prom
     )
     .orderBy(s.messages.createdAt);
 }
+
+/**
+ * The viewer's threads, most recent first. The other side is named by the
+ * business's display name for a client, and by the other person's name (or
+ * a neutral fallback) for a business, so crew names stay private until hire.
+ */
+export async function listThreads(db: Db, viewer: Viewer) {
+  const rows = await db
+    .select({ t: s.chatThreads, providerName: s.providerProfiles.displayName, providerUserId: s.providerProfiles.userId })
+    .from(s.chatThreads)
+    .innerJoin(s.providerProfiles, eq(s.providerProfiles.id, s.chatThreads.providerId))
+    .where(or(eq(s.chatThreads.aUserId, viewer.id), eq(s.chatThreads.bUserId, viewer.id)))
+    .orderBy(desc(sql`coalesce(${s.chatThreads.lastMessageAt}, ${s.chatThreads.createdAt})`));
+  const others = rows.map((r) => (r.t.aUserId === viewer.id ? r.t.bUserId : r.t.aUserId));
+  const names = others.length
+    ? await db.select({ id: s.users.id, name: s.users.name }).from(s.users).where(inArray(s.users.id, others))
+    : [];
+  const nameOf = new Map(names.map((n) => [n.id, n.name]));
+  return rows.map((r, i) => {
+    const viewerIsProvider = r.providerUserId === viewer.id;
+    return {
+      id: r.t.id,
+      kind: r.t.kind,
+      day: r.t.day,
+      lastMessageAt: r.t.lastMessageAt ?? r.t.createdAt,
+      title: viewerIsProvider ? (r.t.kind === "client_business" ? (nameOf.get(others[i]) ?? "A client") : "A business") : r.providerName,
+    };
+  });
+}
