@@ -10,19 +10,27 @@ type Role = "client" | "business" | "freelancer";
 
 type Item = { label: string; href: string; also?: string[] };
 
-/** Only routes that exist under src/app. Messages (/chat) joins once its page lands. */
+/** Only routes that exist under src/app. */
 const NAV: Record<Role, Item[]> = {
   client: [
     { label: "Dates", href: "/" },
     { label: "Browse", href: "/results", also: ["/p/"] },
     { label: "Bookings", href: "/bookings", also: ["/book/"] },
+    { label: "Messages", href: "/chat" },
+    { label: "Rewards", href: "/rewards" },
   ],
   business: [
     { label: "Today", href: "/business" },
+    { label: "Crew", href: "/business/crew" },
+    { label: "Profile", href: "/business/profile" },
+    { label: "Reviews", href: "/business/reviews" },
+    { label: "Messages", href: "/chat" },
     { label: "Rewards", href: "/rewards" },
   ],
   freelancer: [
     { label: "Today", href: "/crew" },
+    { label: "Jobs", href: "/crew/jobs" },
+    { label: "Messages", href: "/chat" },
     { label: "Rewards", href: "/rewards" },
   ],
 };
@@ -30,9 +38,14 @@ const NAV: Record<Role, Item[]> = {
 const HOME: Record<Role, string> = { client: "/", business: "/business", freelancer: "/crew" };
 const LABEL: Record<Role, string> = { client: "Main", business: "Business", freelancer: "Freelancer" };
 
-function isActive(item: Item, path: string) {
+function matches(item: Item, path: string) {
   if (item.href === "/") return path === "/";
   return [item.href, ...(item.also ?? [])].some((h) => (h.endsWith("/") ? path.startsWith(h) : path === h || path.startsWith(`${h}/`)));
+}
+
+/** The matching item with the longest href is current, so /business/crew does not light up Today. */
+function currentHref(items: Item[], path: string) {
+  return items.filter((i) => matches(i, path)).sort((a, b) => b.href.length - a.href.length)[0]?.href;
 }
 
 type Props = {
@@ -47,6 +60,7 @@ type Props = {
 /** Desktop header, 72 px. Phone widths use BottomNav instead. */
 export function WebHeader({ role, name, theme, signedIn, creditPill, levelBadge }: Props) {
   const path = usePathname();
+  const current = currentHref(NAV[role], path);
   return (
     <header className="hidden h-18 border-b border-line bg-ground md:block">
       <div className="mx-auto flex h-full max-w-page items-center justify-between gap-6 px-gutter-desktop">
@@ -56,7 +70,7 @@ export function WebHeader({ role, name, theme, signedIn, creditPill, levelBadge 
           </Link>
           <nav aria-label={LABEL[role]} className="flex items-center gap-1">
             {NAV[role].map((item) => {
-              const on = isActive(item, path);
+              const on = item.href === current;
               return (
                 <Link
                   key={item.href}
