@@ -3,13 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { PayoutQr } from "@/components/booking/payout-qr";
-import { BottomNav, ButtonLink, CheckIcon, StatusChip } from "@/components/ui";
+import { BottomNav, Button, ButtonLink, CheckIcon, StatusChip } from "@/components/ui";
 import { formatRs, paisa } from "@/lib/money";
 import { bsLongWithGregorian, todayInNepal } from "@/lib/nepali-date";
 import { requireUser } from "@/server/auth/guards";
 import { contactFor } from "@/server/booking-contact";
-import { bookingForClient, holdState } from "@/server/bookings";
+import { bookingForClient, completionCreditFor, holdState } from "@/server/bookings";
 import { db } from "@/server/db";
+import { markBalancePaid } from "./actions";
 
 export const metadata: Metadata = { title: "Booking" };
 
@@ -34,6 +35,8 @@ export default async function BookingPage({ params }: PageProps<"/bookings/[code
   const st = lapsed ? { label: "Hold expired", type: "rejected" as const } : STATUS[b.status];
   const who = p.kind === "studio" ? "the studio" : "the provider";
   const contact = await contactFor(db(), b, user);
+  const canMarkPaid = (b.status === "confirmed" || b.status === "in_progress" || b.status === "delivered") && !b.balancePaidClientConfirmedAt;
+  const credit = b.status === "completed" && b.balancePaidClientConfirmedAt ? await completionCreditFor(db(), b.id, user.id) : 0;
 
   return (
     <>
@@ -99,6 +102,24 @@ export default async function BookingPage({ params }: PageProps<"/bookings/[code
           bookingStatus={b.status}
           provider={{ kycStatus: p.kycStatus, payoutMethod: p.payoutMethod, payoutAccountName: p.payoutAccountName, payoutAccountNumber: p.payoutAccountNumber }}
         />
+        {canMarkPaid && (
+          <form action={markBalancePaid} className="flex flex-col gap-2">
+            <input type="hidden" name="code" value={b.code} />
+            <Button type="submit" variant="secondary">
+              I paid the balance
+            </Button>
+            <p className="text-meta text-stone">Marking it paid completes your booking once the event day has passed, and adds your Saait credit.</p>
+          </form>
+        )}
+        {b.balancePaidClientConfirmedAt && (
+          <div className="flex flex-col gap-1 rounded-card border border-line px-4 py-3.5 text-small">
+            <p className="flex items-center gap-2 font-semibold text-teal">
+              <CheckIcon size={18} />
+              Balance marked as paid
+            </p>
+            {credit > 0 && <p className="text-stone">{formatRs(paisa(credit))} credit added</p>}
+          </div>
+        )}
         {b.status === "held" && !lapsed && <ButtonLink href={`/bookings/${b.code}/pay`}>Pay {formatRs(paisa(b.depositAmount + b.bookingFee))} to lock</ButtonLink>}
         {lapsed && (
           <p className="rounded-card bg-tint px-4 py-3.5 text-small">

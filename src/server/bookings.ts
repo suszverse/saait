@@ -21,6 +21,7 @@ import { PAYMENT_METHODS } from "./payments";
 import { DEFAULT_CANCELLATION_POLICY, quote, vatInsideFee } from "@/lib/fees";
 import { formatRs, paisa } from "@/lib/money";
 import { bsDayMonth, daysBetween, gregorianShort, isIsoDate, todayInNepal, type IsoDate } from "@/lib/nepali-date";
+import { onBookingCompleted } from "./rewards/earn";
 
 type Db = PostgresJsDatabase<typeof s>;
 export type BookingDeps = { db: Db; sms: SmsSender; gateway: PaymentGateway; now?: () => Date };
@@ -34,7 +35,7 @@ export const NEPAL_BOUNDS = { lat: [26.3, 30.5], lng: [80.0, 88.3] } as const;
 
 export class BookingError extends Error {
   constructor(
-    public readonly code: "not_found" | "not_bookable" | "date_taken" | "past_date" | "bad_addon" | "wrong_state" | "forbidden",
+    public readonly code: "not_found" | "not_bookable" | "date_taken" | "past_date" | "bad_addon" | "wrong_state" | "forbidden" | "not_confirmable",
     message: string,
   ) {
     super(message);
@@ -291,6 +292,56 @@ export async function expireHolds(db: Db, now = new Date()) {
       .where(and(eq(s.bookings.status, "held"), inArray(s.bookings.holdId, expired.map((h) => h.id))));
   }
   return expired.length;
+}
+
+/** Statuses in which the client can say the balance has been handed over. */
+const BALANCE_CONFIRMABLE = ["confirmed", "in_progress", "delivered"] as const;
+
+/**
+ * The client says the balance was paid to the provider directly (system plan
+ * section 5, step 4). Once the event day has passed in Nepal this completes
+ * the booking: status `completed`, the provider's completed count goes up and
+ * the rewards for completion are posted, all in one transaction. Before the
+ * event day it only records the confirmation; completion comes later.
+ * Idempotent: a second confirm changes nothing.
+ */
+export async function confirmBalancePaid(deps: { db: Db; now?: () => Date }, clientUserId: string, code: string) {
+  const now = deps.now?.() ?? new Date();
+  return deps.db.transaction(async (tx) => {
+    const [b] = await tx.select().from(s.bookings).where(eq(s.bookings.code, code)).for("update");
+    if (!b) throw new BookingError("not_found", "No such booking.");
+    if (b.clientId !== clientUserId) throw new BookingError("forbidden", "This is not your booking.");
+    const alreadyPaid = b.balancePaidClientConfirmedAt !== null;
+    // Already completed, or marked paid and the event is still ahead: nothing to do.
+    if (b.status === "completed") return { changed: false as const };
+    if (!(BALANCE_CONFIRMABLE as readonly string[]).includes(b.status)) {
+      throw new BookingError("not_confirmable", "This booking is not waiting for a balance payment.");
+    }
+    const completes = b.day <= todayInNepal(now);
+    if (alreadyPaid && !completes) return { changed: false as const };
+    // A booking marked paid before the event completes on the first call after
+    // the day has passed (from the page or a jobs:tick sweep), so it is never stuck.
+    await tx
+      .update(s.bookings)
+      .set({ ...(alreadyPaid ? {} : { balancePaidClientConfirmedAt: now }), ...(completes ? { status: "completed" as const } : {}) })
+      .where(eq(s.bookings.id, b.id));
+    if (!completes) return { changed: true as const, completed: false as const, clientCredit: 0 };
+    await tx
+      .update(s.providerProfiles)
+      .set({ completedBookings: sql`${s.providerProfiles.completedBookings} + 1` })
+      .where(eq(s.providerProfiles.id, b.providerId));
+    const rewards = await onBookingCompleted(tx as unknown as Db, b.id, now);
+    return { changed: true as const, completed: true as const, clientCredit: rewards.clientCredit };
+  });
+}
+
+/** Credit the client earned when this booking completed, in paisa; 0 if none was posted. */
+export async function completionCreditFor(db: Db, bookingId: string, clientId: string): Promise<number> {
+  const [row] = await db
+    .select({ amount: s.rewardLedger.amount })
+    .from(s.rewardLedger)
+    .where(and(eq(s.rewardLedger.bookingId, bookingId), eq(s.rewardLedger.userId, clientId), eq(s.rewardLedger.kind, "credit"), eq(s.rewardLedger.reason, "booking_completed")));
+  return row?.amount ?? 0;
 }
 
 export async function bookingForClient(db: Db, code: string, clientId: string) {

@@ -6,10 +6,12 @@ import { fromBs } from "@/lib/nepali-date";
 import { rupees } from "@/lib/money";
 import * as s from "./db/schema";
 import { seed } from "./db/seed";
-import { BookingError, checkout, confirmPayment, expireHolds, retryPendingConfirmations, type BookingDeps } from "./bookings";
+import { BookingError, checkout, confirmBalancePaid, confirmPayment, expireHolds, retryPendingConfirmations, type BookingDeps } from "./bookings";
 import { sign } from "./payments";
 import { manualGateway } from "./payments/manual";
 import { slotsLeft } from "./providers";
+import { BOOKING_POINTS } from "./rewards/earn";
+import { creditBalance, pointsBalance } from "./rewards/ledger";
 import type { SmsSender } from "./sms";
 
 const client = postgres(process.env.DATABASE_URL_TEST ?? "", { max: 5, onnotice: () => {} });
@@ -218,5 +220,68 @@ describe("payment confirmation", () => {
     expect(late).toMatchObject({ ok: false, reason: "hold_expired" });
     const [b] = await db.select().from(s.bookings).where(eq(s.bookings.id, booking.id));
     expect(b.status).toBe("cancelled");
+  });
+});
+
+describe("balance confirmed by the client", () => {
+  // The day after Falgun 12, so the event has passed in Nepal.
+  const AFTER = new Date("2027-02-25T06:00:00Z");
+
+  async function locked(client = clients[0]) {
+    const { booking } = await checkout(deps, client, input());
+    await pay(booking.code);
+    return booking;
+  }
+
+  it("completes the booking after the event day, posting the client's credit and the provider's points", async () => {
+    const booking = await locked();
+    const [before] = await db.select().from(s.providerProfiles).where(eq(s.providerProfiles.id, booking.providerId));
+    const r = await confirmBalancePaid({ db, now: () => AFTER }, clients[0].id, booking.code);
+    // Fee Rs 2,920, nothing covered by credit: a quarter is Rs 730.
+    expect(r).toEqual({ changed: true, completed: true, clientCredit: rupees(730) });
+    const [b] = await db.select().from(s.bookings).where(eq(s.bookings.id, booking.id));
+    expect(b.status).toBe("completed");
+    expect(b.balancePaidClientConfirmedAt).toEqual(AFTER);
+    const [after] = await db.select().from(s.providerProfiles).where(eq(s.providerProfiles.id, booking.providerId));
+    expect(after.completedBookings).toBe(before.completedBookings + 1);
+    expect(await creditBalance(db, clients[0].id, AFTER)).toBe(rupees(730));
+    expect(await pointsBalance(db, after.userId)).toBe(BOOKING_POINTS);
+  });
+
+  it("does nothing on a second confirm", async () => {
+    const booking = await locked();
+    await confirmBalancePaid({ db, now: () => AFTER }, clients[0].id, booking.code);
+    const [p1] = await db.select().from(s.providerProfiles).where(eq(s.providerProfiles.id, booking.providerId));
+    expect(await confirmBalancePaid({ db, now: () => AFTER }, clients[0].id, booking.code)).toEqual({ changed: false });
+    const [p2] = await db.select().from(s.providerProfiles).where(eq(s.providerProfiles.id, booking.providerId));
+    expect(p2.completedBookings).toBe(p1.completedBookings);
+    expect(await creditBalance(db, clients[0].id, AFTER)).toBe(rupees(730));
+  });
+
+  it("refuses someone else's booking and a booking that is not locked", async () => {
+    const booking = await locked();
+    await expect(confirmBalancePaid({ db, now: () => AFTER }, clients[1].id, booking.code)).rejects.toMatchObject({ code: "forbidden" });
+    const { booking: held } = await checkout(deps, clients[2], input({ date: fromBs({ year: 2083, month: 11, day: 13 }) }));
+    await expect(confirmBalancePaid({ db, now: () => AFTER }, clients[2].id, held.code)).rejects.toMatchObject({ code: "not_confirmable" });
+    const [b] = await db.select().from(s.bookings).where(eq(s.bookings.id, booking.id));
+    expect(b.status).toBe("confirmed");
+    expect(b.balancePaidClientConfirmedAt).toBeNull();
+  });
+
+  it("before the event day marks the balance paid but does not complete", async () => {
+    const booking = await locked();
+    expect(await confirmBalancePaid({ db, now: () => NOW }, clients[0].id, booking.code)).toEqual({ changed: true, completed: false, clientCredit: 0 });
+    const [b] = await db.select().from(s.bookings).where(eq(s.bookings.id, booking.id));
+    expect(b.status).toBe("confirmed");
+    expect(b.balancePaidClientConfirmedAt).toEqual(NOW);
+    expect(await creditBalance(db, clients[0].id, NOW)).toBe(0);
+    // Once the event day has passed, the next call completes it instead of getting stuck.
+    const later = await confirmBalancePaid({ db, now: () => AFTER }, clients[0].id, booking.code);
+    expect(later.changed).toBe(true);
+    expect(later).toMatchObject({ completed: true });
+    const [done] = await db.select().from(s.bookings).where(eq(s.bookings.id, booking.id));
+    expect(done.status).toBe("completed");
+    expect(done.balancePaidClientConfirmedAt).toEqual(NOW);
+    expect(await confirmBalancePaid({ db, now: () => AFTER }, clients[0].id, booking.code)).toEqual({ changed: false });
   });
 });
