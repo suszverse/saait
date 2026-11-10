@@ -35,7 +35,10 @@ export default async function AgreePage({ searchParams }: { searchParams: Search
   const sp = await searchParams;
   const kindParam = isKind(sp.kind) ? sp.kind : undefined;
   const next = safeNext(sp.next);
-  const user = await requireUser(kindParam ? `/join/agree?kind=${kindParam}` : next ? `/join/agree?next=${encodeURIComponent(next)}` : "/join/agree");
+  const ref = typeof sp.ref === "string" && /^[0-9A-Za-z]{8}$/.test(sp.ref) ? `&ref=${sp.ref}` : "";
+  const user = await requireUser(
+    kindParam ? `/join/agree?kind=${kindParam}${ref}` : next ? `/join/agree?next=${encodeURIComponent(next)}${ref}` : `/join/agree${ref ? `?${ref.slice(1)}` : ""}`,
+  );
 
   let kind: JoinKind = kindParam ?? "client";
   if (!kindParam && user.role === "provider") {

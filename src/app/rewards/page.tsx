@@ -12,6 +12,7 @@ import { requireUser, type CurrentUser, type ProviderProfile } from "@/server/au
 import { db } from "@/server/db";
 import { providerForUser } from "@/server/provider-account";
 import { creditBalance, lifetimePoints, pointsBalance } from "@/server/rewards/ledger";
+import { ensureReferralCode } from "@/server/rewards/referrals";
 import { redeemAction } from "./actions";
 import { REDEEM_OUTCOMES, type RedeemOutcome } from "./outcomes";
 
@@ -105,7 +106,7 @@ export default async function RewardsPage({ searchParams }: { searchParams: Sear
 
 async function ClientRewards({ user }: { user: CurrentUser }) {
   const credit = await creditBalance(db(), user.id);
-  const inviteLink = user.referralCode ? `${env().APP_URL}/join?ref=${encodeURIComponent(user.referralCode)}` : null;
+  const inviteLink = `${env().APP_URL}/join?ref=${encodeURIComponent(await ensureReferralCode(db(), user.id))}`;
 
   return (
     <>

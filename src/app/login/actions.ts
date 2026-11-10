@@ -6,7 +6,11 @@ import { hasAcceptedCurrent } from "@/server/agreement";
 import { otp } from "@/server/auth/service";
 import { getSession } from "@/server/auth/session";
 import { db } from "@/server/db";
+import { parseReferralCode, recordReferral } from "@/server/rewards/referrals";
 import { normalizeNepalPhone } from "@/server/sms";
+
+/** The OTP service upserts the user, so a row this young was created by this sign-in. */
+const FIRST_SIGN_IN_MS = 2 * 60_000;
 
 export type LoginState = { step: "phone" | "code"; phone?: string; error?: string; next: string };
 
@@ -71,6 +75,12 @@ export async function verifyCode(rawPrev: LoginState, form: FormData): Promise<L
   session.role = r.user.role;
   session.pendingPhone = undefined;
   await session.save();
+  // A user row created moments ago means this is the first sign-in; the join
+  // link's `ref` rides in `next`. Never let a referral problem block sign-in.
+  if (Date.now() - r.user.createdAt.getTime() < FIRST_SIGN_IN_MS) {
+    const ref = parseReferralCode(new URL(next, "http://saait.local").searchParams.get("ref"));
+    if (ref) await recordReferral(db(), { refereeId: r.user.id, code: ref }).catch(() => undefined);
+  }
   const home = r.user.role === "provider" ? "/provider" : r.user.role === "client" ? "/" : "/admin/kyc";
   const target = next !== "/" ? next : home;
   // Everyone accepts the current terms once. A `next` already on the agreement

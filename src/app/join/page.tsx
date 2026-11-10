@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckIcon, ChevronLeftIcon } from "@/components/ui";
+import { parseReferralCode } from "@/server/rewards/referrals";
 
 export const metadata: Metadata = { title: "Join Saait" };
 
@@ -28,7 +29,12 @@ const CHOICES: { kind: "client" | "studio" | "freelancer"; title: string; lines:
   },
 ];
 
-export default function JoinPage() {
+export default async function JoinPage({ searchParams }: PageProps<"/join">) {
+  // A shared link is /join?ref=CODE. It rides on every card link and on to the
+  // login flow, which records it when the new user's row is first created.
+  const sp = await searchParams;
+  const ref = parseReferralCode(sp.ref);
+  const refQuery = ref ? `&ref=${ref}` : "";
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-form flex-col gap-6 px-gutter pt-14 pb-10 md:pt-10">
       <Link href="/" aria-label="Back" className="-ml-3 flex size-11 items-center justify-center rounded-control">
@@ -43,7 +49,7 @@ export default function JoinPage() {
         {CHOICES.map((c) => (
           <Link
             key={c.kind}
-            href={`/join/agree?kind=${c.kind}`}
+            href={`/join/agree?kind=${c.kind}${refQuery}`}
             className="flex flex-col gap-3 rounded-card border border-line bg-ground p-5 no-underline transition-colors hover:bg-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             <span className="text-heading font-bold text-ink">{c.title}</span>
@@ -66,7 +72,7 @@ export default function JoinPage() {
 
       <p className="text-small text-stone">
         Already on Saait?{" "}
-        <Link href="/login" className="font-semibold text-ink">
+        <Link href={ref ? `/login?next=${encodeURIComponent(`/join/agree?ref=${ref}`)}` : "/login"} className="font-semibold text-ink">
           Sign in
         </Link>
       </p>
