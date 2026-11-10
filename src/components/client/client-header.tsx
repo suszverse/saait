@@ -1,11 +1,11 @@
-"use client";
+import { cookies } from "next/headers";
+import { WebHeader } from "@/components/shell/web-header";
+import { THEME_COOKIE, parseTheme } from "@/lib/theme";
+import { currentUser } from "@/server/auth/guards";
 
-import { usePathname } from "next/navigation";
-import { SiteHeader } from "@/components/ui";
-
-/** Desktop header with the tab that matches the current page. */
-export function ClientHeader() {
-  const path = usePathname();
-  const active = path.startsWith("/results") || path.startsWith("/p/") ? "browse" : path.startsWith("/book") ? "bookings" : path.startsWith("/login") ? "you" : "dates";
-  return <SiteHeader role="client" active={active} />;
+/** Client desktop header; the signed-in user's saved theme wins over the device cookie. */
+export async function ClientHeader() {
+  const user = await currentUser();
+  const theme = user ? user.theme : parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  return <WebHeader role="client" name={user?.name ?? undefined} theme={theme} signedIn={!!user} />;
 }
