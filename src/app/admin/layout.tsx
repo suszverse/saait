@@ -5,22 +5,24 @@ import { requireRole } from "@/server/auth/guards";
 import { heldCount } from "@/server/chat/moderation";
 import { db } from "@/server/db";
 import { queue } from "@/server/kyc";
+import { countPendingPortfolio } from "@/server/portfolio";
 import { reportCounts } from "@/server/signals";
 import { AdminNav, type AdminNavItem } from "./admin-nav";
 
 export const metadata: Metadata = { title: { default: "Operator desk", template: "%s · Saait desk" } };
 
-/** Operator desk (Figma screen 8). Live: Verification, Flagged messages, Signals; the rest are placeholders for later phases. */
+/** Operator desk (Figma screen 8). Live: Verification, Flagged messages, Signals, Portfolio; the rest are placeholders for later phases. */
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   await connection();
   const user = await requireRole(["operator", "admin"], "/admin/kyc");
   const database = db();
-  const [q, held, reports] = await Promise.all([queue(database), heldCount(database), reportCounts(database)]);
+  const [q, held, reports, pendingPortfolio] = await Promise.all([queue(database), heldCount(database), reportCounts(database), countPendingPortfolio(database)]);
   const openReports = reports.reduce((sum, r) => sum + r.open, 0);
   const items: AdminNavItem[] = [
     { label: "Verification", href: "/admin/kyc", count: q.total },
     { label: "Flagged messages", href: "/admin/chat", count: held },
     { label: "Signals", href: "/admin/signals", count: openReports },
+    { label: "Portfolio", href: "/admin/portfolio", count: pendingPortfolio },
     { label: "Urgent requests", href: "" },
     { label: "Bookings", href: "" },
     { label: "Disputes", href: "" },
