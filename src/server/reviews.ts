@@ -10,7 +10,7 @@
  * lock their parent row FOR UPDATE and check for an existing review inside
  * the same transaction, which serialises two attempts from the same author.
  */
-import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { BS_MONTHS_NP, daysBetween, toBs, todayInNepal, toNepaliDigits, type IsoDate } from "@/lib/nepali-date";
 import * as s from "./db/schema";
@@ -208,4 +208,24 @@ export async function listReviewsFor(db: Db, providerProfileId: string, opts: { 
     repliedAt: r.repliedAt,
     createdAt: r.createdAt,
   }));
+}
+
+/** Crew jobs among `jobIds` that this author has already reviewed. */
+export async function reviewedCrewJobIds(db: Db, authorId: string, jobIds: string[]): Promise<Set<string>> {
+  if (jobIds.length === 0) return new Set();
+  const rows = await db
+    .select({ id: s.reviews.crewJobId })
+    .from(s.reviews)
+    .where(and(eq(s.reviews.authorId, authorId), isNotNull(s.reviews.crewJobId), inArray(s.reviews.crewJobId, jobIds)));
+  return new Set(rows.map((r) => r.id).filter((id): id is string => id !== null));
+}
+
+/** Whether this author has already reviewed this booking. */
+export async function hasReviewedBooking(db: Db, authorId: string, bookingId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: s.reviews.id })
+    .from(s.reviews)
+    .where(and(eq(s.reviews.authorId, authorId), eq(s.reviews.bookingId, bookingId)))
+    .limit(1);
+  return row !== undefined;
 }
