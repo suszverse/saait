@@ -5,12 +5,14 @@ import { connection } from "next/server";
 import { PayoutQr } from "@/components/booking/payout-qr";
 import { BottomNav, Button, ButtonLink, CheckIcon, StatusChip } from "@/components/ui";
 import { formatRs, paisa } from "@/lib/money";
-import { bsLongWithGregorian, todayInNepal } from "@/lib/nepali-date";
+import { bsLongWithGregorian, daysBetween, todayInNepal, type IsoDate } from "@/lib/nepali-date";
 import { requireUser } from "@/server/auth/guards";
 import { contactFor } from "@/server/booking-contact";
 import { bookingForClient, completionCreditFor, holdState } from "@/server/bookings";
 import { db } from "@/server/db";
+import { hasReviewedBooking, REVIEW_WINDOW_DAYS } from "@/server/reviews";
 import { markBalancePaid } from "./actions";
+import { ReviewForm } from "./review-form";
 
 export const metadata: Metadata = { title: "Booking" };
 
@@ -24,7 +26,8 @@ const STATUS: Record<string, { label: string; type: "verified" | "saait" | "unde
   disputed: { label: "In dispute", type: "under_review" },
 };
 
-export default async function BookingPage({ params }: PageProps<"/bookings/[code]">) {
+export default async function BookingPage({ params, searchParams }: PageProps<"/bookings/[code]">) {
+  const justReviewed = (await searchParams).reviewed === "1";
   await connection();
   const { code } = await params;
   const user = await requireUser(`/bookings/${code}`);
@@ -37,6 +40,9 @@ export default async function BookingPage({ params }: PageProps<"/bookings/[code
   const contact = await contactFor(db(), b, user);
   const canMarkPaid = (b.status === "confirmed" || b.status === "in_progress" || b.status === "delivered") && !b.balancePaidClientConfirmedAt;
   const credit = b.status === "completed" && b.balancePaidClientConfirmedAt ? await completionCreditFor(db(), b.id, user.id) : 0;
+
+  const canReview =
+    b.status === "completed" && daysBetween(b.day as IsoDate, todayInNepal()) <= REVIEW_WINDOW_DAYS && !(await hasReviewedBooking(db(), user.id, b.id));
 
   return (
     <>
@@ -119,6 +125,12 @@ export default async function BookingPage({ params }: PageProps<"/bookings/[code
             </p>
             {credit > 0 && <p className="text-stone">{formatRs(paisa(credit))} credit added</p>}
           </div>
+        )}
+        {canReview && <ReviewForm code={b.code} />}
+        {justReviewed && !canReview && (
+          <p role="status" className="rounded-card bg-teal-tint px-4 py-3 text-small font-semibold text-teal">
+            Thanks. Rs 100 credit added to your Saait credit.
+          </p>
         )}
         {b.status === "held" && !lapsed && <ButtonLink href={`/bookings/${b.code}/pay`}>Pay {formatRs(paisa(b.depositAmount + b.bookingFee))} to lock</ButtonLink>}
         {lapsed && (

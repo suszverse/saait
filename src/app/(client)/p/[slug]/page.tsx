@@ -8,7 +8,10 @@ import { Button, CheckIcon, ChevronLeftIcon, StatusChip } from "@/components/ui"
 import { LevelBadge } from "@/components/ui/level-badge";
 import { formatRs, type Paisa } from "@/lib/money";
 import { bsDayMonth, type IsoDate } from "@/lib/nepali-date";
+import { ReviewList } from "@/components/reviews/review-list";
 import { db } from "@/server/db";
+import { listPortfolio } from "@/server/portfolio";
+import { listReviewsFor } from "@/server/reviews";
 import { getVerifiedProvider, isSaait, slotsLeft } from "@/server/providers";
 import { levelsFor } from "@/server/rewards/ledger";
 import { parseClientQuery, queryString } from "@/server/client/query";
@@ -32,23 +35,35 @@ export default async function ProviderPage({ params, searchParams }: PageProps<"
   const packages = inCategory.length ? inCategory : p.packages;
   const heading = `${packages[0]?.category.shortName ?? "All"} packages`;
   const pick = typeof sp.package === "string" && packages.some((k) => k.id === sp.package) ? sp.package : (packages[Math.min(1, packages.length - 1)]?.id ?? "");
-  const tones = p.portfolioTones.length ? p.portfolioTones : ["#D9D4CB", "#C7C9CF", "#CFC9D6", "#E0DCD3", "#BFC3C9"];
+  const [items, reviews] = await Promise.all([listPortfolio(db(), p.id), listReviewsFor(db(), p.id, { limit: 10 })]);
+  const ordered = [...items.filter((i) => i.mediaKind === "photo"), ...items.filter((i) => i.mediaKind === "clip")].slice(0, 5);
+  const photoTotal = items.filter((i) => i.mediaKind === "photo").length;
   const day = bsDayMonth(q.date);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-page flex-col md:px-gutter-desktop md:pt-8">
       <div className="relative">
-        <div aria-hidden="true" className="grid h-59 grid-cols-3 grid-rows-2 gap-0.75 overflow-hidden md:h-80 md:rounded-card">
-          <span className="row-span-2 block" style={{ background: tones[0] }} />
-          {tones.slice(1, 5).map((t, i) => (
-            <span key={i} className="block" style={{ background: t }} />
-          ))}
+        <div className="grid h-59 grid-cols-3 grid-rows-2 gap-0.75 overflow-hidden bg-tint md:h-80 md:rounded-card">
+          {ordered.length === 0 ? (
+            <span aria-hidden="true" className="col-span-3 row-span-2 block bg-tint" />
+          ) : (
+            ordered.map((m, i) => (
+              <div key={m.id} className={i === 0 ? "row-span-2 overflow-hidden bg-line" : "overflow-hidden bg-line"}>
+                {m.mediaKind === "clip" ? (
+                  <video src={`/media/${m.id}`} controls preload="metadata" muted playsInline className="size-full object-cover" />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`/media/${m.id}`} alt={i === 0 ? `Work by ${p.displayName}` : ""} loading={i === 0 ? "eager" : "lazy"} className="size-full object-cover" />
+                )}
+              </div>
+            ))
+          )}
         </div>
         <Link href={`/results?${queryString(q)}`} aria-label="Back" className="absolute top-13 left-3 flex size-11 items-center justify-center rounded-chip bg-ground md:top-3">
           <ChevronLeftIcon size={22} />
         </Link>
-        {p.photoCount > 0 && (
-          <span className="absolute top-13 right-3 flex h-9 items-center rounded-chip bg-ground px-3 text-meta font-semibold md:top-3">{p.photoCount} photos</span>
+        {photoTotal > 0 && (
+          <span className="absolute top-13 right-3 flex h-9 items-center rounded-chip bg-ground px-3 text-meta font-semibold md:top-3">{photoTotal} photos</span>
         )}
       </div>
 
@@ -119,6 +134,7 @@ export default async function ProviderPage({ params, searchParams }: PageProps<"
             Want something different? Message the studio. They can send you a custom offer at any price you both agree on; the date still locks here.
           </p>
           {saait && <p className="text-meta text-marigold-text">{day} is a wedding date. Surcharges above are added at the price you see.</p>}
+          <ReviewList reviews={reviews} count={p.ratingCount} average={p.ratingAvg} />
         </div>
 
         <div className="sticky bottom-0 mt-5 grid grid-cols-[120px_minmax(0,1fr)] items-center gap-2.5 border-t border-line bg-ground px-gutter pt-3 pb-7 md:static md:mt-0 md:flex md:h-fit md:flex-col md:items-stretch md:rounded-card md:border md:p-5">
